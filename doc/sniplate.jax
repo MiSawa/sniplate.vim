@@ -1,0 +1,318 @@
+*sniplate.txt*
+
+Version : 0.2
+Author  : Mi_Sawa <mi.sawa.1216+vim@gmail.com>
+License : zlib License
+==============================================================================
+目次						*sniplate-contents*
+
+概要				|sniplate-introduction|
+インストール			|sniplate-install|
+使い方				|sniplate-usage|
+インターフェース		|sniplate-interface|
+  コマンド			  |sniplate-commands|
+  関数				  |sniplate-functions|
+  変数				  |sniplate-variables|
+構文				|sniplate-syntax|
+例				|sniplate-examples|
+更新履歴			|sniplate-changelog|
+
+
+
+==============================================================================
+概要						*sniplate-introduction*
+
+*sniplate* は, ファイルの編集中に, コード断片を読み込む為のプラグインである.
+既存のプラグインに比べ, 関数程度の大きさのコードを扱いやすく, 依存関係, 多重読
+み込みの防止等の機能がある.
+
+また, |unite| の source として, スニペットを選択出来る.
+
+
+==============================================================================
+注意						*sniplate-attention*
+
+Note:
+このプラグインは開発途中である為, 互換性を持たない更新が行われる場合がある.
+|neobundle| 等のプラグイン管理プラグインを用いている場合, リビジョンを固定する
+事を勧める.
+
+
+==============================================================================
+インストール					*sniplate-install*
+
+配布ファイルをVimスクリプトのディレクトリへインストールする.
+(普通は ~/.vim/ , Windowsの場合, $HOME/vimfiles である.)
+
+|neobundle| 等を用いている場合は, |.vimrc| に
+>
+    NeoBundle 'MiSawa/sniplate.vim'
+<
+と記述し, |:NeoBundleInstall| を実行する. 但し, |sniplate-attention| を参照せよ.
+
+
+==============================================================================
+使い方						*sniplate-usage*
+
+~/.vim/sniplate 以下にファイルタイプ別のディレクトリを作り, そこにスニペットフ
+ァイルを作成する. フォルダの場所を変更したい場合は,
+|g:sniplate#sniplates_directory| , |g:sniplate#filetype_config| を参照.
+スニペットファイルの作成については, |sniplate-syntax|, |sniplate-examples| を参照.
+スニペットを挿入するには, |SniplateLoad| を用いるが, |unite| をインストールしている
+場合は, 'Unite sniplate' を用いる事も出来る.
+
+
+==============================================================================
+インターフェース				*sniplate-interface*
+
+------------------------------------------------------------------------------
+コマンド					*sniplate-commands*
+
+:[line]SniplateLoad[!] {snippetname}		*:SniplateLoad*
+	指定した名前のスニペットを [line] の位置に読み込む. [line] を省略した
+	場合, 現在行に読み込む. [!] を付けると, 読み込む行を削除する.
+
+:SniplateClearCache [{filetypes}]		*:SniplateClearCache*
+	{filetypes} で指定したファイルタイプのキャッシュを削除する. {filetype}
+	に何も指定しなければ, 全てのキャッシュを削除する.
+	例: ファイルタイプが cpp と ruby のキャッシュを削除する.
+>
+	    SniplateClearCache cpp ruby
+<
+:SniplateClearVariables [{varnames}]		*:SniplateClearVariables*
+	{varnames} で指定した, 現在のバッファにキャッシュされた変数を削除する.
+	{varnames} に何も指定しなければ, 全ての変数を削除する.
+	例: 変数 X と Y を削除する.
+>
+	    SniplateClearVariables X Y
+<
+
+------------------------------------------------------------------------------
+変数						*sniplate-variables*
+
+g:sniplate#sniplates_directory
+				*g:sniplate#sniplates_directory*
+	スニペットを置くディレクトリへのパス.
+
+	デフォルトの値は '~/.vim/sniplates'
+
+g:sniplate#filetype_config
+				*g:sniplate#filetype_config*
+	ファイルタイプ別の設定を行う為の変数.
+
+	例: ファイルタイプが cpp の時に, |g:sniplate#sniplates_directory| 直下
+	    のcplusplus ディレクトリにスニペットを置く場合.
+>
+	    let g:sniplate#filetype_config = {}
+	    let g:sniplate#filetype_config['cpp'] = {
+		\ 'directory' : 'cplusplus' }
+<
+	デフォルトの値は {}.
+
+g:sniplate#enable_cache
+				*g:sniplate#enable_cache*
+	この変数が 1 の時, ファイルタイプ毎に, 一度列挙したスニペットをキャッ
+	シュする.
+	デフォルトの値は 1.
+
+g:sniplate#cache_variable_in_buffer
+				*g:sniplate#cache_variable_in_buffer*
+	この変数が 1 の時, バッファ毎に, 一度入力した変数をキャッシュする.
+	デフォルトの値は 1.
+
+g:sniplate#sniplate_enable_autobang
+				*g:sniplate#enable_autobang*
+	この変数が 0 以外の時, ファイルが空であった場合に, 1行目を上書きしてス
+	ニペットを挿入し, ファイル末尾に改行を残さない.
+
+	デフォルトの値は 1.
+
+g:sniplate#sniplate_keyword_pattern
+                                *g:sniplate#keyword_pattern*
+        この変数を変更する事で, キーワードのパターンを変更する事が出来る.
+        これにマッチする行が, キーワードを含む行と解釈され, 1番目のサブマッチ
+        がキー, 2番目がその引数となる.
+
+        Note: 以後の例は, 全て, この変数がデフォルトの場合の物である.
+
+        デフォルトの値は '{{\s*\(.\{-\}\)\s*\%(:\s*\(.\{-\}\)\s*\)\?}}'.
+
+g:sniplate#sniplate_begin_keyword
+				*g:sniplate#sniplate_begin_keyword*
+	スニペットの開始キーワード.
+
+        Note: 以後の例は, 全て, この変数がデフォルトの場合の物である.
+
+	デフォルトの値は 'BEGIN SNIPLATE'.
+
+g:sniplate#sniplate_end_keyword
+				*g:sniplate#sniplate_end_keyword*
+	スニペットの終了キーワード.
+
+        Note: 以後の例は, 全て, この変数がデフォルトの場合の物である.
+
+	デフォルトの値は 'END SNIPLATE'.
+
+
+------------------------------------------------------------------------------
+関数						*sniplate-functions*
+
+
+==============================================================================
+構文						*sniplate-syntax*
+
+開始キーワードから, 終了キーワードの間に, スニペットを記述する. これらのキーワ
+ードを変更するには, |g:sniplate#sniplate_begin_keyword|,
+|g:sniplate#sniplate_end_keyword| を参照.
+開始キーワードの直後に, スニペットの名前を記述する. これは, 各ファイルタイプ毎
+に一意でなければならない.
+
+スニペットでは, いくつかのキーワードを埋め込む事が出来る. 具体的な用例は,
+|sniplate-examples| を参照.
+キーワードのパターンは, |g:sniplate#sniplate_keyword_pattern| によって変更する事
+が出来る.
+
+キーワード:
+
+- {{ abbr: {abbr} }}
+    Uniteからスニペットを選択する際, スニペット名に加えて {abbr} が表示される.
+    この行は挿入されない.
+
+- {{ require: {names} }}
+    {names} はカンマ区切りのスニペット名であり, これらに依存するスニペットであ
+    る事を示す. {names} は, 最初にある物ほど上になるように挿入され, 再帰的に処
+    理される. 具体的には, 深さ優先探索の帰りがけ順で挿入される. 同じ物が何度も
+    require されていても, 挿入されるのは一度である.
+    この行は挿入されない.
+
+- {{ pattern: {pat} }}
+    これが指定された場合, このスニペットの多重読み込みを禁止する. このスニペッ
+    トが既に読み込まれているかの判定は, {pat} にマッチするか否かで行われる.
+    この行は挿入されない.
+
+- {{ priority: {num} }}
+    候補の表示順に影響する. {num} が大きいもの程, 前に表示される. このキーワー
+    ドが指定されていないスニペットは priority が 0 であるものとして扱われる.
+    この行は挿入されない.
+
+- {{ invisible }}
+    これが指定された場合, |unite| や |:SniplateLoad| での候補として表示されな
+    くなる.
+    この行は挿入されない.
+
+- {{ exec: {expr} }}
+    execute {expr} が行われる.
+    この行は挿入されない.
+
+- {{ input: {var} : {prompt} [, {text} [, {completion}]] }}
+    変数 {var} に値が設定されていない場合, 変数 {var} に値を設定するプロン
+    プトを表示する. 書式は |input| を参照.
+    |g:sniplate#cache_variable_in_buffer| が 0 の時, この変数は, 一回の読み込
+    みの間のみ値が保たれる. require により同時に読み込まれるスニペットについて
+    も, 同じ変数名に対しては同じ値が保たれる.
+    |g:sniplate#cache_variable_in_buffer| が 1 の時は, この変数は, 同じバッフ
+    ァに対して保たれる.
+    この行は挿入されない.
+
+- {{ var: {var} }}
+    変数 {var} に値が設定されていない場合は, 'var {var}: ' というプロンプトが
+    表示され, {var} に入力された値を設定する.
+    変数 {var} の値に置き換わる.
+
+- {{ cursor }}
+    これが指定された場合, このスニペットを挿入した後に, これがあった場所にカー
+    ソルを移動する.
+    依存するスニペット等により, 一度の挿入で複数の {{ cursor }}があった場合は,
+    最下部の物が適用される.
+    挿入時には, {{ cursor }} の部分は削除される.
+
+- {{ eval: {expr} }}
+    この部分は, 挿入時に eval( {expr} ) によって評価された値に置き換わる.
+
+
+Note:
+変数 X に対し, >
+        {{ var : X }}
+<と入力すると, 無限ループに陥る.
+また, eval で 自分自身を表現する文字列(いわゆるQuine) を書くと, 無限ループに
+陥る. CTRL-C (Windowsの場合は CTRL-Break) で止まるので, それで対処すると良いだ
+ろう. (see |script|)
+
+
+==============================================================================
+例						*sniplate-examples*
+
+|unite| を使う場合, キーマッピングをしておくと便利である.
+>
+    nnoremap [unite] <Nop>
+    xnoremap [unite] <Nop>
+    nmap <Space>u [unite]
+    xmap <Space>u [unite]
+    nnoremap <silent> [unite]t :<C-u>Unite sniplate
+          \ -start-insert<CR>
+<
+
+sniplateファイルの例.
+>
+    // ~/.vim/sniplate/cpp/main.cc
+    // 拡張子は必ずしも一致していなくても良い
+
+    // BEGIN SNIPLATE INCLUDES
+    // {{exec: set foldmethod=marker}}
+    // {{invisible}}
+    // inserted at {{eval: strftime('%c')}}
+    #include <iostream> //{{{
+    #include <vector>
+    //  : and many more
+    #include <cmath> //}}}
+
+    // END SNIPLATE
+
+    // BEGIN SNIPLATE MAIN
+    // {{require: INCLUDES}}
+    // {{priority: 10}}
+    int main(void) {
+        {{cursor}}
+    }
+    // END SNIPLATE
+<
+
+>
+    // ~/.vim/sniplate/cpp/math/num/gcd.cpp
+    // 深いディレクトリでもよい
+
+    // BEGIN SNIPLATE gcd
+    // {{pattern: ^\s*\(.*\)\s*gcd(\1\s*a,\s*\1\s*b)\s*{$ }}
+    // {{input: T : 'input T: ', 'int'}}
+    {{var: T}} gcd({{var: T }} a, {{var: T}} b) {
+        while(b) swap(a%=b, b);
+        return a;
+    }
+    // END SNIPLATE
+<
+>
+    // ~/.vim/sniplate/cpp/math/num/lcm.cpp
+    // 同じファイルからでなくても require 可能
+
+    // BEGIN SNIPLATE lcm
+    // {{require: gcd}}
+    // {{pattern: ^\s*\(.*\)\s*lcm(\1\s*a,\s*\1\s*b)\s*{$ }}
+    {{var: T}} lcm({{var: T}} a, {{var: T}} b) {
+        return a / gcd(a, b) * b;
+    }
+    // END SNIPLATE
+<
+
+==============================================================================
+更新履歴					*sniplate-changelog*
+
+
+0.2.0	2013-02-06
+	- priority, invisible, input, exec, var, cursor, eval を追加.
+
+0.1.0	2013-02-05
+	- これまでローカルで用いていた物を大幅に書きなおし, 初版とした.
+
+
+==============================================================================
+vim:tw=78:fo=tcq2mM:ts=8:ft=help:norl
