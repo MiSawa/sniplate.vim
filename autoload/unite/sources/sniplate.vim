@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE:           sniplate.vim
 " AUTHOR:         Mi_Sawa <mi.sawa.1216+vim@gmail.com>
-" Last Modified:  4 Feb 2013.
+" Last Modified:  6 Feb 2013.
 " License:        zlib License
 "=============================================================================
 
@@ -21,6 +21,7 @@ function! s:source.gather_candidates(args, context) "{{{
   for l:sniplate in values(sniplates)
     call add(l:res, {})
     let l:res[-1].word           = l:sniplate.name
+    ". 't ' . l:sniplate.abbr
     let l:res[-1].kind           = 'sniplate'
     " let l:res[-1].action__name   = l:sniplate.name
     let l:res[-1].action__path   = l:sniplate.path

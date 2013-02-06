@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE:           sniplate.vim
 " AUTHOR:         Mi_Sawa <mi.sawa.1216+vim@gmail.com>
-" Last Modified:  4 Feb 2013.
+" Last Modified:  6 Feb 2013.
 " License:        zlib License
 "=============================================================================
 
@@ -50,11 +50,7 @@ call s:set_default(
 call s:set_default(
       \ 's:sniplate_end_keyword', 'END SNIPLATE', 'g:sniplate#sniplate_end_keyword' )
 call s:set_default(
-      \ 's:sniplate_enable_autobang', 1, 'g:sniplate#sniplate_enable_autobang')
-call s:set_default(
       \ 's:sniplate_enable_cache', 1, 'g:sniplate#sniplate_enable_cache')
-call s:set_default(
-      \ 's:sniplate_keyword_pattern', '{{\s*\(.\{-\}\)\s*\%(:\s*\(.\{-\}\)\s*\)\?}}', 'g:sniplate#sniplate_keyword_pattern')
 call s:set_default(
       \ 's:sniplate_cache_variable_in_buffer', 1, 'g:sniplate#cache_variable_in_buffer')
 "}}}
@@ -143,7 +139,7 @@ function! s:enumerate_sniplate_files(config) "{{{
   return filter(split(globpath(l:sniplate_directory, '*'), '\n'), '!isdirectory(v:val)')
 endfunction "}}}
 
-function! s:enumerate_sniplates(config) "{{{
+function! s:noncached_enumerate_sniplates(config) "{{{
   let l:sniplate_files = s:enumerate_sniplate_files(a:config)
   let l:sniplates = {}
   for l:sniplate_file in l:sniplate_files
@@ -153,16 +149,16 @@ function! s:enumerate_sniplates(config) "{{{
   return l:sniplates
 endfunction "}}}
 
-function! s:cached_enumerate_sniplates(config) "{{{
+function! s:enumerate_sniplates(config) "{{{
   if !s:sniplate_enable_cache
-    return s:enumerate_sniplates(a:config)
+    return s:noncached_enumerate_sniplates(a:config)
   endif
   if !exists('s:cached_sniplates')
     let s:cached_sniplates = {}
   endif
   if !exists('s:cached_sniplates[a:config.filetype]')
     let s:cached_sniplates[a:config.filetype] =
-          \ s:enumerate_sniplates(a:config)
+          \ s:noncached_enumerate_sniplates(a:config)
   endif
   return s:cached_sniplates[a:config.filetype]
 endfunction "}}}
@@ -182,7 +178,7 @@ endfunction "}}}
 
 function! s:enumerate_connected_sniplates(sniplate) "{{{
   let l:stack = [a:sniplate.name]
-  let l:sniplates = s:cached_enumerate_sniplates(
+  let l:sniplates = s:enumerate_sniplates(
         \ s:get_filetype_config(a:sniplate.filetype) )
   let l:res = []
   let l:state = {}
@@ -238,7 +234,7 @@ function! s:insert_lines(lines, line_to_insert, overwrite_line) "{{{
     execute 'silent! .-1 delete _'
   endif
 
-  if l:cursor_bck[1] > a:line_to_insert - !!a:overwrite_line
+  if l:cursor_bck[1] > a:line_to_insert - 1
     let l:cursor_bck[1] += len(a:lines) - (!!a:overwrite_line)
   endif
   call setpos('.', l:cursor_bck)
@@ -248,7 +244,8 @@ function! s:apply_sniplates(sniplates, config, ...) "{{{
   if empty(a:sniplates) | return | endif
 
   let l:lines = []
-  let l:line_to_insert = get(a:000, 1, line('.'))
+  let l:line_to_insert = get(a:000, 0, line('.'))
+  let l:force_insert = get(a:000, 1, 0)
   let l:overwrite = a:config.overwrite "{{{
   if a:sniplates[-1].overwrite != -1
     let l:overwrite = a:sniplates[-1].overwrite
@@ -268,7 +265,7 @@ function! s:apply_sniplates(sniplates, config, ...) "{{{
   endif "}}}
 
   for l:sniplate in a:sniplates "{{{
-    if sniplate#util#is_already_insert(l:sniplate)
+    if !l:force_insert && sniplate#util#is_already_insert(l:sniplate)
       continue
     endif
     for l:line in l:sniplate.lines
@@ -379,13 +376,19 @@ endfunction "}}}
 function! sniplate#enumerate_sniplates(...) "{{{
   " 引数はファイルタイプ. 省略時は&ft.
   let l:filetype = get(a:000, 0, &ft)
-  return s:cached_enumerate_sniplates(s:get_filetype_config(l:filetype))
+  return s:enumerate_sniplates(s:get_filetype_config(l:filetype))
 endfunction "}}}
 
 function! sniplate#enumerate_visible_sniplates(...) "{{{
   " 引数はファイルタイプ. 省略時は&ft.
   return filter(call('sniplate#enumerate_sniplates', a:000),
         \ '!v:val.is_invisible')
+endfunction "}}}
+
+function! sniplate#has_sniplate(sniplate_name, ...) "{{{
+  return has_key(
+        \ call('sniplate#enumerate_sniplates', a:000),
+        \ a:sniplate_name)
 endfunction "}}}
 
 function! sniplate#clear_cached_sniplates(...) "{{{
@@ -405,7 +408,6 @@ endfunction "}}}
 
 function! sniplate#apply_sniplates(sniplates, ...) "{{{
   " 引数は sniplate 変数のリスト. 通常は from_name を用いるべき.
-  " TODO: ここでautobangするの良くない.
   if empty(a:sniplates) | return | endif
   let l:config = s:get_filetype_config(a:sniplates[0].filetype)
   call call('s:apply_sniplates_with_require',
@@ -443,14 +445,32 @@ function! sniplate#apply_sniplate_from_name(sniplate_name, ...) "{{{
         \ + a:000)
 endfunction "}}}
 
-function! sniplate#load(...) "{{{
+function! sniplate#load_sniplate(...) "{{{
   " same as apply_sniplate_from_name
   call call('sniplate#apply_sniplate_from_name', a:000)
 endfunction "}}}
 
+function! sniplate#load_sniplates(...) "{{{
+  " same as apply_sniplates_from_name
+  call call('sniplate#apply_sniplates_from_name', a:000)
+endfunction "}}}
+
+function! sniplate#load_sniplates_if_exists(sniplate_names, ...) "{{{
+  let l:valid_names = filter(copy(a:sniplate_names),
+        \ 'sniplate#has_sniplate(v:val)')
+  call call('sniplate#load_sniplates',
+        \ [l:valid_names]
+        \ + a:000)
+endfunction "}}}
+
+function! sniplate#load_sniplate_if_exists(sniplate_name, ...) "{{{
+  call call('sniplate#load_sniplates_if_exists',
+        \ [[a:sniplate_name]]
+        \ + a:000)
+endfunction "}}}
 "}}}
 
-" for commands "{{{
+" for commands completion"{{{
 function! sniplate#complete(arglead, cmdline, cursorpos) "{{{
   let l:res = filter(values(sniplate#enumerate_visible_sniplates()),
         \ 'stridx(tolower(v:val.name), tolower(a:arglead)) >= 0')
