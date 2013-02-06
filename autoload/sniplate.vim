@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE:           sniplate.vim
 " AUTHOR:         Mi_Sawa <mi.sawa.1216+vim@gmail.com>
-" Last Modified:  6 Feb 2013.
+" Last Modified:  7 Feb 2013.
 " License:        zlib License
 "=============================================================================
 
@@ -195,7 +195,7 @@ function! s:enumerate_connected_sniplates(sniplate) "{{{
         call add(l:stack, remove(l:state[l:stack[-1]], 0))
       endif
     else
-      let l:state[l:last] = copy(l:sniplates[l:last].require)
+      let l:state[l:last] = deepcopy(l:sniplates[l:last].require)
     endif
   endwhile
   return l:res
@@ -205,9 +205,23 @@ endfunction "}}}
 " functions for apply sniplate "{{{
 function! s:enumerate_cached_variables() "{{{
   if has_key(b:, 'sniplate') && has_key(b:sniplate, 'variables')
-    return copy(b:sniplate.variables)
+    return deepcopy(b:sniplate.variables)
   endif
   return {}
+endfunction "}}}
+
+function! s:set_variable(var, val, ...) "{{{
+  " Unite sniplate/variables の replace に必要.
+  if a:0
+    let l:variables = a:1
+  elseif s:sniplate_cache_variable_in_buffer
+    if !has_key(b:, 'sniplate') | let b:sniplate = {} | endif
+    if !has_key(b:sniplate, 'variables') | let b:sniplate.variables = {} | endif
+    let l:variables = b:sniplate.variables
+  else
+    return
+  endif
+  let l:variables[a:var] = a:val
 endfunction "}}}
 
 function! s:clear_cached_variables(...) "{{{
@@ -255,12 +269,8 @@ function! s:apply_sniplates(sniplates, config, ...) "{{{
   endif "}}}
   let l:variables = {} "{{{
   if s:sniplate_cache_variable_in_buffer
-    if !has_key(b:, 'sniplate')
-      let b:sniplate = {}
-    endif
-    if !has_key(b:sniplate, 'variables')
-      let b:sniplate.variables = {}
-    endif
+    if !has_key(b:, 'sniplate') | let b:sniplate = {} | endif
+    if !has_key(b:sniplate, 'variables') | let b:sniplate.variables = {} | endif
     let l:variables = b:sniplate.variables  "NOTE: shallow
   endif "}}}
 
@@ -281,7 +291,9 @@ function! s:apply_sniplates(sniplates, config, ...) "{{{
           let [l:var_name, l:input_args]
                 \ = matchlist(l:operand, '\s*\(.\{-\}\)\s*:\(.*\)')[1:2]
           if !has_key(l:variables, l:var_name)
-            let l:variables[l:var_name] = eval('input(' . l:input_args . ')')
+            let l:variables[l:var_name] =
+                  \ eval('sniplate#util#input_variable('
+                  \ . string(l:var_name) . ', '. l:input_args . ')')
           endif
           unlet l:var_name
           unlet l:input_args
@@ -312,7 +324,7 @@ function! s:apply_sniplates(sniplates, config, ...) "{{{
           if l:operator =~ 'var'
             if !has_key(l:variables, l:operand)
               let l:variables[l:operand] =
-                    \ input('var ' . l:operand . ': ')
+                    \ sniplate#util#input_variable(l:operand)
             endif
             let l:line = substitute(
                   \ l:line, a:config.keyword_pattern, l:variables[l:operand], '')
@@ -394,7 +406,7 @@ endfunction "}}}
 function! sniplate#clear_cached_sniplates(...) "{{{
   " 引数はファイルタイプ. 複数指定可能. 省略時は全て.
   call call('s:clear_cached_sniplates',
-        \ map(copy(a:000), 's:get_filetype_config(v:val)'))
+        \ map(deepcopy(a:000), 's:get_filetype_config(v:val)'))
 endfunction "}}}
 
 function! sniplate#enumerate_cached_variables() "{{{
@@ -404,6 +416,12 @@ endfunction "}}}
 function! sniplate#clear_cached_variables(...) "{{{
   " 引数は変数名. 複数指定可能. 省略時は全て.
   call call('s:clear_cached_variables', a:000)
+endfunction "}}}
+
+function! sniplate#set_variable(var, val, ...) "{{{
+  call call('s:set_variable',
+        \ [a:var, a:val]
+        \ + a:000)
 endfunction "}}}
 
 function! sniplate#apply_sniplates(sniplates, ...) "{{{
@@ -456,7 +474,7 @@ function! sniplate#load_sniplates(...) "{{{
 endfunction "}}}
 
 function! sniplate#load_sniplates_if_exists(sniplate_names, ...) "{{{
-  let l:valid_names = filter(copy(a:sniplate_names),
+  let l:valid_names = filter(deepcopy(a:sniplate_names),
         \ 'sniplate#has_sniplate(v:val)')
   call call('sniplate#load_sniplates',
         \ [l:valid_names]

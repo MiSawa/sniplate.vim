@@ -1,6 +1,6 @@
 *sniplate.txt*
 
-Version : 0.0.1
+Version : 0.0.2
 Author  : Mi_Sawa <mi.sawa.1216+vim@gmail.com>
 License : zlib License
 ==============================================================================
@@ -17,6 +17,7 @@ License : zlib License
 構文                            |sniplate-syntax|
   キーワード                    |sniplate-keyword|
 例                              |sniplate-examples|
+Unite sources                   |sniplate-unite-sources|
 更新履歴                        |sniplate-changelog|
 
 
@@ -144,25 +145,25 @@ sniplate#clear_cached_variables( [{varname} ...])
 変数                                            *sniplate-variables*
 
                                 *g:sniplate#sniplates_directory*
-g:sniplate#sniplates_directory          string (default: '~/.vimrc')
+g:sniplate#sniplates_directory          String (default: '~/.vimrc')
         スニペットを置くディレクトリへのパス.
 
                                 *g:sniplate#filetype_config*
-g:sniplate#filetype_config              dictionary (default: {})
+g:sniplate#filetype_config              Dictionary (default: {})
         ファイルタイプ別の設定を行う為の辞書. 各キーはファイルタイプ名であるが
         , 全てのファイルタイプに共通する設定は '_' で, ファイルタイプが無い場
         合は 'nothing' で扱う.
 
-        directory                       string (default: same as &ft)
+        directory                       String (default: same as &ft)
             |g:sniplate#sniplates_directory| からのパスを記述する.
 
-        overwrite                       number (default: 2)
+        overwrite                       Number (default: 2)
             スニペットを挿入する行を削除するか否かを選択する.値は 0, 1, 2 のい
             ずれかである. 値が 0 である時は保持する. 値が 1 である時は削除する
             . 値が 2 である時は, バッファが空の行一行のみからなる場合は削除し,
             それ以外では保持する.
 
-        keyword_pattern                 string (default: show below)
+        keyword_pattern                 String (default: show below)
             この変数を変更する事で, キーワードのパターンを変更する事が出来る.
             これにマッチする行が, キーワードを含む行と解釈され, 1番目のサブマ
             ッチがキー, 2番目がその引数となる.
@@ -181,20 +182,20 @@ g:sniplate#filetype_config              dictionary (default: {})
                 \ }
 <
                                 *g:sniplate#enable_cache*
-g:sniplate#enable_cache                 boolean (default: true)
+g:sniplate#enable_cache                 Number (default: 1)
         この変数が真の時, ファイルタイプ毎に, 一度列挙したスニペットをキャッシ
         ュする.
 
                                 *g:sniplate#cache_variable_in_buffer*
-g:sniplate#cache_variable_in_buffer     boolean (default: true)
+g:sniplate#cache_variable_in_buffer     Number (default: 1)
         この変数が真の時, バッファ毎に, 一度入力した変数をキャッシュする.
 
                                 *g:sniplate#sniplate_begin_keyword*
-g:sniplate#sniplate_begin_keyword       string (default: 'BEGIN SNIPLATE')
+g:sniplate#sniplate_begin_keyword       String (default: 'BEGIN SNIPLATE')
         スニペットの開始キーワード.
 
                                 *g:sniplate#sniplate_end_keyword*
-g:sniplate#sniplate_end_keyword         string (default: 'END SNIPLATE')
+g:sniplate#sniplate_end_keyword         String (default: 'END SNIPLATE')
 
         スニペットの終了キーワード.
 
@@ -213,7 +214,7 @@ g:sniplate#sniplate_end_keyword         string (default: 'END SNIPLATE')
 の 'keyword_pattern' キーによって変更する事が出来る.
 
 ------------------------------------------------------------------------------
-キーワード:                                     *sniplate-keyword*
+キーワード                                      *sniplate-keyword*
 
                                                 *sniplate-keyword-abbr*
 - {{ abbr: {abbr} }}
@@ -263,10 +264,10 @@ g:sniplate#sniplate_end_keyword         string (default: 'END SNIPLATE')
                                                 *sniplate-keyword-input*
 - {{ input: {var} : {prompt} [, {text} [, {completion}]] }}
     変数 {var} に値が設定されていない場合, 変数 {var} に値を設定するプロン
-    プトを表示する. 書式は |input| を参照.
-    |g:sniplate#cache_variable_in_buffer| が偽の時, この変数は, 一回の読み込
-    みの間のみ値が保たれる. require により同時に読み込まれるスニペットについて
-    も, 同じ変数名に対しては同じ値が保たれる.
+    プトを表示する. 書式は |input| を参照. 既に {var} に値が設定されている場合
+    は何もしない.  |g:sniplate#cache_variable_in_buffer| が偽の時, この変数は,
+    一回の読み込みの間のみ値が保たれる. require 等により同時に読み込まれるスニ
+    ペットについても, 同じ変数名に対しては同じ値が保たれる.
     |g:sniplate#cache_variable_in_buffer| が真の時は, この変数は, 同じバッファ
     に対して保たれる.
     この行は挿入されない.
@@ -340,7 +341,7 @@ sniplateファイルの例.
     // {{overwrite: auto}}
     int main(void) {
         {{cursor}}
-        return 0:
+        return 0;
     }
     // END SNIPLATE
 
@@ -349,7 +350,7 @@ sniplateファイルの例.
     // {{overwrite: auto}}
     int main(int argc, char const* argv[]) {
         {{cursor}}
-        return 0:
+        return 0;
     }
     // END SNIPLATE
 <
@@ -381,8 +382,28 @@ sniplateファイルの例.
 <
 
 ==============================================================================
+Unite sources                               *sniplate-unite-sources*
+
+|sniplate.vim| は, 2つの |unite-sources| を提供する.
+
+                                            *sniplate-unite-source-sniplate*
+sniplate
+        現ファイルタイプのスニペットを候補とする. 複数選択が可能で, 現在行に挿
+        入する事が出来る. また, |unite-kind-jump_list| により, スニペットが定
+        義されたファイルを開く事が可能.
+
+                                        *sniplate-unite-source-sniplate-variable*
+sniplate/variable
+        バッファにキャッシュされた変数を候補選択出来る. 値の変更や, キャッシュ
+        からの削除が可能.
+
+
+==============================================================================
 更新履歴                                        *sniplate-changelog*
 
+0.0.2   2013-02-07
+        - unite でスニペットを複数選択可能にした.
+        - unite source に sniplate/variables を追加した.
 
 0.0.1   2013-02-06
         - priority, invisible, input, exec, var, cursor, eval を追加.

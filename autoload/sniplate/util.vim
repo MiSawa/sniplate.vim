@@ -69,6 +69,14 @@ function! sniplate#util#convert_to_012(var, error_message, ...) "{{{
   return -1
 endfunction "}}}
 
+function! sniplate#util#input_variable(var, ...) "{{{
+  if a:0
+    return call('input', a:000)
+  else
+    return input('var ' . a:var . ': ')
+  endif
+endfunction "}}}
+
 let &cpo = s:save_cpo
 unlet s:save_cpo
 " vim:se ts=2 sw=2 sts=2 fenc=utf-8 ff=unix ft=vim foldmethod=marker :
