@@ -337,8 +337,18 @@ function! s:apply_sniplates(sniplates, config, ...) "{{{
         let [l:operator, l:operand]
               \ = matchlist(l:line, a:config.keyword_pattern)[1:2]
         " keywords which is delete line {{{
-        if l:operator =~ 'exec'
+        if 0
+
+        elseif l:operator =~ 'exec'
           execute l:operand
+          continue
+
+        elseif l:operator =~ 'let'
+          let [l:var_name, l:val] =
+                \ matchlist(l:operand, '\s*\(.\{-\}\)\s*:\(.*\)')[1:2]
+          let l:variables[l:var_name] = eval(l:val)
+          unlet l:var_name
+          unlet l:val
           continue
 
         elseif l:operator =~ 'input'

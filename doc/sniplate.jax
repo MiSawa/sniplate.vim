@@ -1,4 +1,4 @@
-*sniplate.txt*
+*sniplate.txt*    template plugin for Battle Programmer.
 
 Version : 0.0.3
 Author  : Mi_Sawa <mi.sawa.1216+vim@gmail.com>
@@ -27,7 +27,7 @@ Unite sources                   |sniplate-unite-sources|
 
 *sniplate* (又は *sniplate.vim* )は, ファイルの編集中に, コード断片を読み込む為の
 プラグインである. 既存のプラグインに比べ, 関数程度の大きさのコードを扱いやすく
-, 依存関係, 多重読み込みの防止等の機能がある.
+, 依存関係の処理, 多重読み込みの防止等の機能がある.
 
 また, |unite| の source として, スニペットを選択出来る.
 
@@ -51,7 +51,7 @@ Note:
 インストール                                    *sniplate-install*
 
 配布ファイルをVimスクリプトのディレクトリへインストールする.
-(普通は ~/.vim/ , Windowsの場合, $HOME/vimfiles である.)
+(普通は ~/.vim/ , Windowsの場合, $HOME/vimfiles/ である.)
 
 |neobundle| 等を用いている場合は, |.vimrc| に
 >
@@ -280,6 +280,11 @@ g:sniplate#sniplate_end_keyword         String (default: 'END SNIPLATE')
     に対して保たれる.
     この行は挿入されない. この行に他のキーワードを含めてはならない.
 
+                                                *sniplate-keyword-let*
+- {{ let: {var} : {expr} }}
+    変数 {var} に {expr} を評価した結果を代入する.
+    この行は挿入されない. この行に他のキーワードを含めてはならない.
+
                                                 *sniplate-keyword-var*
 - {{ var: {var} }}
     変数 {var} に値が設定されていない場合は, 'var {var}: ' というプロンプトが
@@ -407,13 +412,13 @@ Unite sniplate[:{arg} [:{arg} [...]]]
         現ファイルタイプのスニペットを候補とする. 複数選択が可能で, 現在行に挿
         入する事が出来る. また, |unite-kind-jump_list| により, スニペットが定
         義されたファイルを開く事が可能. {arg} に '!' を渡すと,
-        *sniplate-keyword-require* に関わらず, 強制的に挿入する. 引数にクラス
+        |sniplate-keyword-require| に関わらず, 強制的に挿入する. 引数にクラス
         を指定すると, それらのクラスのいずれかに属するスニペットのみを表示する.
 
         例: number クラスの候補を表示し, 強制的に挿入する場合.
 >
             Unite sniplate:!:number
-< 
+<
                                         *sniplate-unite-source-sniplate-variable*
 Unite sniplate/variable[:{var} [:{var} [...]]]
         バッファにキャッシュされた変数を候補選択出来る. 値の変更や, キャッシュ
@@ -424,7 +429,7 @@ Unite sniplate/variable[:{var} [:{var} [...]]]
 更新履歴                                        *sniplate-changelog*
 
 0.0.3   2013-02-07
-        - class を追加.
+        - class, let を追加.
         - unite での補完関数を改善した.
         - fix typo
 
