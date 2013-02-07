@@ -30,9 +30,10 @@ let s:kind.action_table.insert = {
       \ }
 
 function! s:kind.action_table.insert.func(candidates) "{{{
+  if empty(a:candidates) | return | endif
   call call('sniplate#apply_sniplates',
         \ [map(deepcopy(a:candidates), 'v:val.source__sniplate')]
-        \ )
+        \ + [line('.'), a:candidates[0].source__bang])
 endfunction "}}}
 
 function! unite#kinds#sniplate#define() "{{{

@@ -16,7 +16,8 @@ let s:kind = {
       \ }
 
 let s:kind.alias_table = {
-      \   'ex'          : 'nop',
+      \   'ex'               : 'nop',
+      \   'insert_directory' : 'nop',
       \ }
 
 let s:kind.action_table.delete = {
@@ -34,7 +35,7 @@ function! s:kind.action_table.delete.func(candidates) "{{{
 endfunction "}}}
 
 let s:kind.action_table.replace = {
-      \   'description'         : 'clear this variable from cache',
+      \   'description'         : 'replace this variable''s value',
       \   'is_quit'             : 1,
       \   'is_selectable'       : 0,
       \   'is_invalidate_cache' : 1,

@@ -57,7 +57,7 @@ call s:set_default(
 "}}}
 
 " functions for make sniplate list "{{{
-function! s:perse_sniplate(str, sniplate_file, line_number, config) "{{{
+function! s:parse_sniplate(str, sniplate_file, line_number, config) "{{{
   let l:res             = {
         \ 'require'        : [],
         \ 'pattern'        : '',
@@ -66,6 +66,7 @@ function! s:perse_sniplate(str, sniplate_file, line_number, config) "{{{
         \ 'is_invisible'   : 0,
         \ 'overwrite'      : -1,
         \ }
+  let l:res.class       = sniplate#util#set#emptyset()
   let l:res.raw_lines   = split(a:str, "\n")
   let l:res.path        = a:sniplate_file
   let l:res.line_number = a:line_number
@@ -79,10 +80,15 @@ function! s:perse_sniplate(str, sniplate_file, line_number, config) "{{{
       let [l:operator, l:operand]
             \ = matchlist(l:line, a:config.keyword_pattern)[1:2]
       "{{{
-      if l:operator ==? 'require'
+      if 0
+
+      elseif l:operator ==? 'class'
+        call l:res.class.add_items(split(l:operand, '\s*,\s*'))
+
+      elseif l:operator ==? 'require'
         call extend(l:res.require, split(l:operand, '\s*,\s*'))
 
-      elseif l:operator ==? 'pattern' || l:operator ==? 'match'
+      elseif l:operator ==? 'pattern'
         let l:res.pattern = l:operand
 
       elseif l:operator ==? 'abbr'
@@ -125,7 +131,7 @@ function! s:enumerate_sniplates_from_file(sniplate_file, config) "{{{
       break
     endif
     let l:linenr = count(split(l:all_text[0 : match(l:all_text, l:pattern, 0, i)], '\zs'), "\n")
-    let l:temp = s:perse_sniplate(l:snip_text, a:sniplate_file, l:linenr, a:config)
+    let l:temp = s:parse_sniplate(l:snip_text, a:sniplate_file, l:linenr, a:config)
     let l:sniplates[l:temp.name] = l:temp
     unlet l:temp
     let l:i += 1
@@ -138,6 +144,7 @@ function! s:enumerate_sniplate_files(config) "{{{
         \ [s:sniplates_directory, a:config.directory, '**'], '/')
   return filter(split(globpath(l:sniplate_directory, '*'), '\n'), '!isdirectory(v:val)')
 endfunction "}}}
+
 
 function! s:noncached_enumerate_sniplates(config) "{{{
   let l:sniplate_files = s:enumerate_sniplate_files(a:config)
@@ -200,9 +207,55 @@ function! s:enumerate_connected_sniplates(sniplate) "{{{
   endwhile
   return l:res
 endfunction "}}}
+
+
+function! s:enumerate_sniplates_has_class(class, config) "{{{
+  let l:all_sniplates = s:enumerate_sniplates(a:config)
+  let l:res = {}
+  for [l:snipname, l:sniplate] in items(l:all_sniplates)
+    if l:sniplate.class.has(a:class)
+      let l:res[l:snipname] = l:sniplate
+    endif
+  endfor
+  return l:res
+endfunction "}}}
+
+function! s:enumerate_sniplates_has_all_classes(classes, config) "{{{
+  let l:all_sniplates = s:enumerate_sniplates(a:config)
+  let l:res = {}
+  for [l:snipname, l:sniplate] in items(l:all_sniplates)
+    if l:sniplate.class.has_all(a:classes)
+      let l:res[l:snipname] = l:sniplate
+    endif
+  endfor
+  return l:res
+endfunction "}}}
+
+function! s:enumerate_sniplates_has_any_classes(classes, config) "{{{
+  let l:all_sniplates = s:enumerate_sniplates(a:config)
+  let l:res = {}
+  for [l:snipname, l:sniplate] in items(l:all_sniplates)
+    if l:sniplate.class.has_any(a:classes)
+      let l:res[l:snipname] = l:sniplate
+    endif
+  endfor
+  return l:res
+endfunction "}}}
+
+function! s:enumerate_classes(config) "{{{
+  let l:res = sniplate#util#set#emptyset()
+  let l:all_sniplates = s:enumerate_sniplates(a:config)
+  for [l:snipname, l:sniplate] in items(l:all_sniplates)
+    call l:res.union(l:sniplate.class)
+  endfor
+  return l:res
+endfunction "}}}
 "}}}
 
 " functions for apply sniplate "{{{
+" apply系の関数は, s:apply_sniplates(sniplates, config, ...) に集約される.
+" 可変長引数部分は, これのみで決まる.
+
 function! s:enumerate_cached_variables() "{{{
   if has_key(b:, 'sniplate') && has_key(b:sniplate, 'variables')
     return deepcopy(b:sniplate.variables)
@@ -259,6 +312,7 @@ function! s:apply_sniplates(sniplates, config, ...) "{{{
 
   let l:lines = []
   let l:line_to_insert = get(a:000, 0, line('.'))
+  " if l:line_to_insert < 0 | let l:line_to_insert = line('.') | endif
   let l:force_insert = get(a:000, 1, 0)
   let l:overwrite = a:config.overwrite "{{{
   if a:sniplates[-1].overwrite != -1
@@ -382,19 +436,38 @@ endfunction "}}}
 "}}}
 
 " function for user "{{{
-" apply系のユーザ向け関数は, sniplate#apply_sniplates に集約される.
-" 可変長引数部分は, これに行く.
-
 function! sniplate#enumerate_sniplates(...) "{{{
   " 引数はファイルタイプ. 省略時は&ft.
   let l:filetype = get(a:000, 0, &ft)
   return s:enumerate_sniplates(s:get_filetype_config(l:filetype))
 endfunction "}}}
 
-function! sniplate#enumerate_visible_sniplates(...) "{{{
+function! sniplate#remove_invisible(sniplates) "{{{
+  return filter(a:sniplates, '!v:val.is_invisible')
+endfunction "}}}
+
+function! sniplate#enumerate_classes(...) "{{{
   " 引数はファイルタイプ. 省略時は&ft.
-  return filter(call('sniplate#enumerate_sniplates', a:000),
-        \ '!v:val.is_invisible')
+  let l:filetype = get(a:000, 0, &ft)
+  return deepcopy(s:enumerate_classes(s:get_filetype_config(l:filetype)).items())
+endfunction "}}}
+
+function! sniplate#enumerate_sniplates_has_class(class, ...) "{{{
+  " 2番目の引数はファイルタイプ. 省略時は&ft.
+  let l:filetype = get(a:000, 0, &ft)
+  return s:enumerate_sniplates_has_class(a:class, s:get_filetype_config(l:filetype))
+endfunction "}}}
+
+function! sniplate#enumerate_sniplates_has_all_classes(classes, ...) "{{{
+  " 2番目の引数はファイルタイプ. 省略時は&ft.
+  let l:filetype = get(a:000, 0, &ft)
+  return s:enumerate_sniplates_has_all_classes(a:classes, s:get_filetype_config(l:filetype))
+endfunction "}}}
+
+function! sniplate#enumerate_sniplates_has_any_classes(classes, ...) "{{{
+  " 2番目の引数はファイルタイプ. 省略時は&ft.
+  let l:filetype = get(a:000, 0, &ft)
+  return s:enumerate_sniplates_has_any_classes(a:classes, s:get_filetype_config(l:filetype))
 endfunction "}}}
 
 function! sniplate#has_sniplate(sniplate_name, ...) "{{{
@@ -425,7 +498,6 @@ function! sniplate#set_variable(var, val, ...) "{{{
 endfunction "}}}
 
 function! sniplate#apply_sniplates(sniplates, ...) "{{{
-  " 引数は sniplate 変数のリスト. 通常は from_name を用いるべき.
   if empty(a:sniplates) | return | endif
   let l:config = s:get_filetype_config(a:sniplates[0].filetype)
   call call('s:apply_sniplates_with_require',
@@ -489,8 +561,12 @@ endfunction "}}}
 "}}}
 
 " for commands completion"{{{
+" unite 向けは unite/source/*.vim で直接作っている
+
 function! sniplate#complete(arglead, cmdline, cursorpos) "{{{
-  let l:res = filter(values(sniplate#enumerate_visible_sniplates()),
+  let l:all_sniplates = sniplate#enumerate_sniplates()
+  call sniplate#remove_invisible(l:all_sniplates)
+  let l:res = filter(values(l:all_sniplates),
         \ 'stridx(tolower(v:val.name), tolower(a:arglead)) >= 0')
   call sniplate#util#sort_by(l:res, 'stridx(tolower(a:1.name), tolower(' . string(a:arglead) . '))')
   call sniplate#util#sort_by(l:res, '-a:1.priority')
@@ -498,8 +574,18 @@ function! sniplate#complete(arglead, cmdline, cursorpos) "{{{
 endfunction "}}}
 
 function! sniplate#complete_cached_variables(arglead, cmdline, cursorpos) "{{{
-  return filter(keys(sniplate#enumerate_cached_variables()),
+  let l:res = filter(keys(sniplate#enumerate_cached_variables()),
         \ 'stridx(tolower(v:val), tolower(a:arglead)) >= 0')
+  call sniplate#util#sort_by(l:res, 'stridx(tolower(a:1), tolower(' . string(a:arglead) . '))')
+  return l:res
+endfunction "}}}
+
+function! sniplate#complete_classes(arglead, cmdline, cursorpos) "{{{
+  " 今は使われていない
+  let l:res = filter(sniplate#enumerate_classes(),
+        \ 'stridx(tolower(v:val), tolower(a:arglead)) >= 0')
+  call sniplate#util#sort_by(l:res, 'stridx(tolower(a:1), tolower(' . string(a:arglead) . '))')
+  return l:res
 endfunction "}}}
 "}}}
 

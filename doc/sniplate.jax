@@ -1,6 +1,6 @@
 *sniplate.txt*
 
-Version : 0.0.2
+Version : 0.0.3
 Author  : Mi_Sawa <mi.sawa.1216+vim@gmail.com>
 License : zlib License
 ==============================================================================
@@ -211,7 +211,8 @@ g:sniplate#sniplate_end_keyword         String (default: 'END SNIPLATE')
 
 スニペットでは, いくつかのキーワードを埋め込む事が出来る. 具体的な用例は,
 |sniplate-examples| を参照. キーワードのパターンは, |g:sniplate#filetype_config|
-の 'keyword_pattern' キーによって変更する事が出来る.
+の 'keyword_pattern' キーによって変更する事が出来る. キーワードを埋め込むか否
+かは任意であり, 必須なものではない.
 
 ------------------------------------------------------------------------------
 キーワード                                      *sniplate-keyword*
@@ -219,7 +220,13 @@ g:sniplate#sniplate_end_keyword         String (default: 'END SNIPLATE')
                                                 *sniplate-keyword-abbr*
 - {{ abbr: {abbr} }}
     Uniteからスニペットを選択する際, スニペット名に加えて {abbr} が表示される.
-    この行は挿入されない.
+    この行は挿入されない. この行に他のキーワードを含めてはならない.
+
+                                                *sniplate-keyword-class*
+- {{ class: {classs} }}
+    {classses} はカンマ区切りの文字列であり, そのスニペットが属するクラスを表
+    す.  Uniteでの絞り込みに利用される.
+    この行は挿入されない. この行に他のキーワードを含めてはならない.
 
                                                 *sniplate-keyword-require*
 - {{ require: {names} }}
@@ -227,26 +234,27 @@ g:sniplate#sniplate_end_keyword         String (default: 'END SNIPLATE')
     る事を示す. {names} は, 最初にある物ほど上になるように挿入され, 再帰的に処
     理される. 具体的には, 深さ優先探索の帰りがけ順で挿入される.  pattern キー
     ワードに依らず, 同じ物が何度も require されていても, 挿入されるのは一度で
-    ある.
-    この行は挿入されない.
+    ある. |sniplate-keyword-class| の継承は行われない. (今後もそうであるとは限
+    らない)
+    この行は挿入されない. この行に他のキーワードを含めてはならない.
 
                                                 *sniplate-keyword-pattern*
 - {{ pattern: {pat} }}
     これが指定された場合, このスニペットの多重読み込みを禁止する. このスニペッ
     トが既に読み込まれているかの判定は, {pat} にマッチするか否かで行われる.
-    この行は挿入されない.
+    この行は挿入されない. この行に他のキーワードを含めてはならない.
 
                                                 *sniplate-keyword-priority*
 - {{ priority: {num} }}
     候補の表示順に影響する. {num} が大きいもの程, 前に表示される. このキーワー
     ドが指定されていないスニペットは priority が 0 であるものとして扱われる.
-    この行は挿入されない.
+    この行は挿入されない. この行に他のキーワードを含めてはならない.
 
                                                 *sniplate-keyword-invisible*
 - {{ invisible }}
     これが指定された場合, |unite| や |:SniplateLoad| での候補として表示されな
     くなる.
-    この行は挿入されない.
+    この行は挿入されない. この行に他のキーワードを含めてはならない.
 
                                                 *sniplate-keyword-overwrite*
 - {{ overwrite : {flag} }}
@@ -254,12 +262,12 @@ g:sniplate#sniplate_end_keyword         String (default: 'END SNIPLATE')
     ットの物のみ有効であり, false は 0, true は 1, auto は 2 と同義で,
     |g:sniplate#filetype_config| の 'overwrite' キーと同じ動作を意味するが, こ
     のキーに依らず動作する.
-    この行は挿入されない.
+    この行は挿入されない. この行に他のキーワードを含めてはならない.
 
                                                 *sniplate-keyword-exec*
 - {{ exec: {expr} }}
     execute {expr} が行われる.
-    この行は挿入されない.
+    この行は挿入されない. この行に他のキーワードを含めてはならない.
 
                                                 *sniplate-keyword-input*
 - {{ input: {var} : {prompt} [, {text} [, {completion}]] }}
@@ -270,7 +278,7 @@ g:sniplate#sniplate_end_keyword         String (default: 'END SNIPLATE')
     ペットについても, 同じ変数名に対しては同じ値が保たれる.
     |g:sniplate#cache_variable_in_buffer| が真の時は, この変数は, 同じバッファ
     に対して保たれる.
-    この行は挿入されない.
+    この行は挿入されない. この行に他のキーワードを含めてはならない.
 
                                                 *sniplate-keyword-var*
 - {{ var: {var} }}
@@ -296,11 +304,17 @@ Note:
         {{ var : X }}
 <と入力すると, 無限ループに陥る.
 また, eval で 自分自身を表現する文字列(いわゆるQuine) を書くと, 無限ループに
-陥る. 止めるには, CTRL-C (Windowsの場合は CTRL-Break) を押下する. (see |script|)
+陥る. 止めるには, CTRL-C (Windowsの場合は CTRL-Break) を押下する.
 
 
 ==============================================================================
 例                                              *sniplate-examples*
+
+新しいファイルを作る時, 'template'という名前のスニペットがそのファイルタイプに
+存在すれば, ロードする.
+>
+    autocmd BufNewFile * call sniplate#load_sniplate_if_exists('template')
+<
 
 |unite| を使う場合, キーマッピングをしておくと便利である.
 >
@@ -361,6 +375,7 @@ sniplateファイルの例.
 
     // BEGIN SNIPLATE gcd
     // {{pattern: ^\s*\(.*\)\s*gcd(\1\s*a,\s*\1\s*b)\s*{$ }}
+    // {{class: number, algebra}}
     // {{input: T : 'input T: ', 'int'}}
     {{var: T}} gcd({{var: T }} a, {{var: T}} b) {
         while(b) swap(a%=b, b);
@@ -374,6 +389,7 @@ sniplateファイルの例.
 
     // BEGIN SNIPLATE lcm
     // {{require: gcd}}
+    // {{class: number, algebra}}
     // {{pattern: ^\s*\(.*\)\s*lcm(\1\s*a,\s*\1\s*b)\s*{$ }}
     {{var: T}} lcm({{var: T}} a, {{var: T}} b) {
         return a / gcd(a, b) * b;
@@ -387,19 +403,30 @@ Unite sources                               *sniplate-unite-sources*
 |sniplate.vim| は, 2つの |unite-sources| を提供する.
 
                                             *sniplate-unite-source-sniplate*
-sniplate
+Unite sniplate[:{arg} [:{arg} [...]]]
         現ファイルタイプのスニペットを候補とする. 複数選択が可能で, 現在行に挿
         入する事が出来る. また, |unite-kind-jump_list| により, スニペットが定
-        義されたファイルを開く事が可能.
+        義されたファイルを開く事が可能. {arg} に '!' を渡すと,
+        *sniplate-keyword-require* に関わらず, 強制的に挿入する. 引数にクラス
+        を指定すると, それらのクラスのいずれかに属するスニペットのみを表示する.
 
+        例: number クラスの候補を表示し, 強制的に挿入する場合.
+>
+            Unite sniplate:!:number
+< 
                                         *sniplate-unite-source-sniplate-variable*
-sniplate/variable
+Unite sniplate/variable[:{var} [:{var} [...]]]
         バッファにキャッシュされた変数を候補選択出来る. 値の変更や, キャッシュ
-        からの削除が可能.
+        からの削除が可能. 引数が指定されると, その候補のみを表示する.
 
 
 ==============================================================================
 更新履歴                                        *sniplate-changelog*
+
+0.0.3   2013-02-07
+        - class を追加.
+        - unite での補完関数を改善した.
+        - fix typo
 
 0.0.2   2013-02-07
         - unite でスニペットを複数選択可能にした.
@@ -409,7 +436,6 @@ sniplate/variable
         - priority, invisible, input, exec, var, cursor, eval を追加.
         - キーワードパターンを, ファイルタイプ毎に設定出来るように変更.
         - overwrite を追加.
-        - helpを更新.
 
 0.0.0   2013-02-05
         - これまでローカルで用いていた物を大幅に書きなおし, 初版とした.

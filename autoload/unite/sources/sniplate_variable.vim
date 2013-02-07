@@ -12,11 +12,11 @@ let s:source = {
       \   'name'           : 'sniplate/variable',
       \   'description'    : 'candidates from sniplate variables in current buffer',
       \   'default_kind'   : 'sniplate/variable',
-      \   'default_action' : 'insert',
+      \   'default_action' : 'replace',
       \ }
 
 function! s:source.gather_candidates(args, context) "{{{
-  call unite#print_message('[sniplate]')
+  call unite#print_message('[sniplate/variable]')
   let l:variables = sniplate#enumerate_cached_variables()
   let l:res = []
   for [l:var, l:val] in items(l:variables)
@@ -32,9 +32,9 @@ function! s:source.gather_candidates(args, context) "{{{
 endfunction "}}}
 
 function! s:source.complete(args, context, arglead, cmdline, cursorpos) "{{{
-  return sniplate#complete_cached_variables(
-        \ a:arglead, a:cmdline, a:cursorpos
-        \ )
+  let l:res = keys(sniplate#enumerate_cached_variables())
+  call filter(l:res, 'index(a:args[:-2], v:val) == -1')
+  return l:res
 endfunction "}}}
 
 function! unite#sources#sniplate_variable#define() "{{{
