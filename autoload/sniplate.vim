@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE:           sniplate.vim
 " AUTHOR:         Mi_Sawa <mi.sawa.1216+vim@gmail.com>
-" Last Modified:  8 Feb 2013.
+" Last Modified:  9 Feb 2013.
 " License:        zlib License
 "=============================================================================
 
@@ -39,7 +39,7 @@ endfunction "}}}
 "{{{ variables
 let s:sniplate_filetype_config = {
       \ '_': {
-      \  'keyword_pattern' : '{{\s*\(.\{-\}\)\s*\%(:\s*\(.\{-\}\)\s*\)\?}}',
+      \  'keyword_pattern' : '{{\s*\(.\{-\}\)\s*\%(:\s*\(.\{-\}\)\s*\%(:\s*\(.\{-\}\)\s*\)\?\)\?}}',
       \  'overwrite'       : 2,
       \  }
       \ }
@@ -71,14 +71,14 @@ function! s:parse_sniplate(str, sniplate_file, line_number, config) "{{{
   let l:res.path        = a:sniplate_file
   let l:res.line_number = a:line_number
   let l:res.name        = matchlist(l:res.raw_lines[0],
-        \ s:sniplate_begin_keyword . '\s*\(\S*\)\s*')[1]
+        \ '\C' . s:sniplate_begin_keyword . '\s*\(\S*\)\s*')[1]
   let l:res.lines       = []
   let l:res.filetype    = a:config.filetype
 
   for l:line in l:res.raw_lines[1:-2]
     if l:line =~ a:config.keyword_pattern
-      let [l:operator, l:operand]
-            \ = matchlist(l:line, a:config.keyword_pattern)[1:2]
+      let [l:operator, l:operand, l:arg]
+            \ = matchlist(l:line, a:config.keyword_pattern)[1:3]
       "{{{
       if 0
 
@@ -120,7 +120,7 @@ endfunction "}}}
 function! s:enumerate_sniplates_from_file(sniplate_file, config) "{{{
   if !filereadable(a:sniplate_file) | return {} | endif
   let l:all_text = join([''] + readfile(a:sniplate_file, 'b'), "\n")
-  let l:pattern = "\n[^\n]\\{-\\}" . s:sniplate_begin_keyword . ".\\{-\\}" . s:sniplate_end_keyword . ".\\{-\\}\n"
+  let l:pattern = "\\C\n[^\n]\\{-\\}" . s:sniplate_begin_keyword . ".\\{-\\}" . s:sniplate_end_keyword . ".\\{-\\}\n"
   let l:i = 1
   let l:sniplates = {}
   while 1
@@ -343,8 +343,8 @@ function! s:apply_sniplates(sniplates, config, ...) "{{{
     endif
     for l:line in l:sniplate.lines
       if l:line =~ a:config.keyword_pattern
-        let [l:operator, l:operand]
-              \ = matchlist(l:line, a:config.keyword_pattern)[1:2]
+        let [l:operator, l:operand, l:arg]
+              \ = matchlist(l:line, a:config.keyword_pattern)[1:3]
         " keywords which is delete line {{{
         if 0
 
@@ -353,23 +353,15 @@ function! s:apply_sniplates(sniplates, config, ...) "{{{
           continue
 
         elseif l:operator ==# 'let'
-          let [l:var_name, l:val] =
-                \ matchlist(l:operand, '\s*\(.\{-\}\)\s*:\(.*\)')[1:2]
-          let l:variables[l:var_name] = eval(l:val)
-          unlet l:var_name
-          unlet l:val
+          let l:variables[l:operand] = eval(l:arg)
           continue
 
         elseif l:operator ==# 'input' || l:operator ==# 'input!'
-          let [l:var_name, l:input_args]
-                \ = matchlist(l:operand, '\s*\([^:]\+\)\s*:\?\s*\(.*\)\s*')[1:2]
-          if !has_key(l:variables, l:var_name) || l:operator ==# 'input!'
-            let l:variables[l:var_name] =
+          if !has_key(l:variables, l:operand) || l:operator ==# 'input!'
+            let l:variables[l:operand] =
                   \ eval('sniplate#util#input_variable('
-                  \ . string(l:var_name) . ', '. l:input_args . ')')
+                  \ . string(l:operand) . ', '. l:arg . ')')
           endif
-          unlet l:var_name
-          unlet l:input_args
           continue
         endif
         "}}}
@@ -379,8 +371,8 @@ function! s:apply_sniplates(sniplates, config, ...) "{{{
         let l:edit_flg = 1
         while l:line =~ a:config.keyword_pattern && l:edit_flg
           let l:edit_flg = 0
-          let [l:operator, l:operand] =
-                \ matchlist(l:line, a:config.keyword_pattern)[1:2]
+          let [l:operator, l:operand, l:arg] =
+                \ matchlist(l:line, a:config.keyword_pattern)[1:3]
           if l:operator ==# 'eval'
             let l:line = substitute(
                   \ l:line, a:config.keyword_pattern, eval(l:operand), '')
@@ -392,8 +384,8 @@ function! s:apply_sniplates(sniplates, config, ...) "{{{
         let l:edit_flg = 1
         while l:line =~ a:config.keyword_pattern && l:edit_flg
           let l:edit_flg = 0
-          let [l:operator, l:operand] =
-                \ matchlist(l:line, a:config.keyword_pattern)[1:2]
+          let [l:operator, l:operand, l:var] =
+                \ matchlist(l:line, a:config.keyword_pattern)[1:3]
           if l:operator ==# 'var'
             if !has_key(l:variables, l:operand)
               let l:variables[l:operand] =
@@ -409,8 +401,8 @@ function! s:apply_sniplates(sniplates, config, ...) "{{{
         let l:edit_flg = 1
         while l:line =~ a:config.keyword_pattern && l:edit_flg
           let l:edit_flg = 0
-          let [l:operator, l:operand] =
-                \ matchlist(l:line, a:config.keyword_pattern)[1:2]
+          let [l:operator, l:operand, l:var] =
+                \ matchlist(l:line, a:config.keyword_pattern)[1:3]
           if l:operator ==# 'cursor'
             let l:cursor_pos = getpos('.')
             let l:cursor_pos[1] = l:line_to_insert + len(l:lines) + !l:overwrite

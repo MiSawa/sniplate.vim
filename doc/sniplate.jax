@@ -1,6 +1,6 @@
 *sniplate.txt*    template plugin for Battle Programmer.
 
-Version : 0.0.4
+Version : 0.0.5
 Author  : Mi_Sawa <mi.sawa.1216+vim@gmail.com>
 License : zlib License
 ==============================================================================
@@ -169,17 +169,18 @@ g:sniplate#filetype_config              Dictionary (default: {})
             これにマッチする行が, キーワードを含む行と解釈され, 1番目のサブマ
             ッチがキー, 2番目がその引数となる.
 
-            デフォルトの値は '{{\s*\(.\{-\}\)\s*\%(:\s*\(.\{-\}\)\s*\)\?}}'.
+            デフォルトの値は,
+            '{{\s*\(.\{-\}\)\s*\%(:\s*\(.\{-\}\)\s*\%(:\s*\(.\{-\}\)\s*\)\?\)\?}}'
 
         例: ファイルタイプが cpp の時に, |g:sniplate#sniplates_directory| 直下の
-            cplusplus ディレクトリにスニペットを置き, キーワードをブロックコメ
-            ントで囲う場合.
+            cplusplus ディレクトリにスニペットを置き, キーワードの直前に行コメ
+            ントがあった場合, それを含めてキーワードとみなす場合.
 >
             let g:sniplate#filetype_config = {}
             let g:sniplate#filetype_config['cpp'] = {
                 \ 'directory' : 'cplusplus',
                 \ 'keyword_pattern':
-                \ '/\*\s*{{\s*\(.\{-\}\)\s*\%(:\s*\(.\{-\}\)\s*\)\?}}\s*\*/'
+                \ '\%(//\)\s*{{\s*\(.\{-\}\)\s*\%(:\s*\(.\{-\}\)\s*\%(:\s*\(.\{-\}\)\s*\)\?\)\?}}'
                 \ }
 <
                                 *g:sniplate#enable_cache*
@@ -448,6 +449,12 @@ Unite sniplate/class
 
 ==============================================================================
 更新履歴                                        *sniplate-changelog*
+
+0.0.5   2013-02-09
+        - sniplate/class の action start を修正した.
+        - keyword_pattern を3引数にした.
+        - begin/end keyword を case sensitive にした.
+        - help の例を更新した.
 
 0.0.4   2013-02-08
         - input に bang を指定可能にした.

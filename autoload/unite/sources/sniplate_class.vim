@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE:           sniplate_variable.vim
 " AUTHOR:         Mi_Sawa <mi.sawa.1216+vim@gmail.com>
-" Last Modified:  7 Feb 2013.
+" Last Modified:  9 Feb 2013.
 " License:        zlib License
 "=============================================================================
 
@@ -12,7 +12,7 @@ let s:source = {
       \   'name'           : 'sniplate/class',
       \   'description'    : 'candidates from sniplate class',
       \   'default_kind'   : 'sniplate/class',
-      \   'default_action' : 'gather',
+      \   'default_action' : 'start',
       \ }
 
 function! s:source.gather_candidates(args, context) "{{{
