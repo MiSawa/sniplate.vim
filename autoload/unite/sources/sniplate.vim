@@ -45,7 +45,7 @@ function! s:source.gather_candidates(args, context) "{{{
       let l:res[-1].abbr             = printf('%-50.50s %s',
             \ l:snipname, l:sniplate.abbr)
     else
-      let l:res[-1].abbr             = printf('%-30.30s %-20.20s %s',
+      let l:res[-1].abbr             = printf('%-20.20s %-30.30s %s',
             \ l:snipname, l:sniplate.class.string(), l:sniplate.abbr)
     endif
     let l:res[-1].source__sniplate = l:sniplate

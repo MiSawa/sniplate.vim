@@ -1,6 +1,6 @@
 *sniplate.txt*    template plugin for Battle Programmer.
 
-Version : 0.0.3
+Version : 0.0.4
 Author  : Mi_Sawa <mi.sawa.1216+vim@gmail.com>
 License : zlib License
 ==============================================================================
@@ -16,6 +16,7 @@ License : zlib License
   変数                            |sniplate-variables|
 構文                            |sniplate-syntax|
   キーワード                    |sniplate-keyword|
+  スニペット変数                |sniplate-snippet-variable|
 例                              |sniplate-examples|
 Unite sources                   |sniplate-unite-sources|
 更新履歴                        |sniplate-changelog|
@@ -212,7 +213,7 @@ g:sniplate#sniplate_end_keyword         String (default: 'END SNIPLATE')
 スニペットでは, いくつかのキーワードを埋め込む事が出来る. 具体的な用例は,
 |sniplate-examples| を参照. キーワードのパターンは, |g:sniplate#filetype_config|
 の 'keyword_pattern' キーによって変更する事が出来る. キーワードを埋め込むか否
-かは任意であり, 必須なものではない.
+かは任意であり, 必須なものではない. 詳細は |sniplate-keyword| を参照.
 
 ------------------------------------------------------------------------------
 キーワード                                      *sniplate-keyword*
@@ -270,14 +271,15 @@ g:sniplate#sniplate_end_keyword         String (default: 'END SNIPLATE')
     この行は挿入されない. この行に他のキーワードを含めてはならない.
 
                                                 *sniplate-keyword-input*
-- {{ input: {var} : {prompt} [, {text} [, {completion}]] }}
-    変数 {var} に値が設定されていない場合, 変数 {var} に値を設定するプロン
-    プトを表示する. 書式は |input| を参照. 既に {var} に値が設定されている場合
-    は何もしない.  |g:sniplate#cache_variable_in_buffer| が偽の時, この変数は,
-    一回の読み込みの間のみ値が保たれる. require 等により同時に読み込まれるスニ
-    ペットについても, 同じ変数名に対しては同じ値が保たれる.
-    |g:sniplate#cache_variable_in_buffer| が真の時は, この変数は, 同じバッファ
-    に対して保たれる.
+- {{ input[!]: {var} [: {prompt} [, {text} [, {completion}]]]}}
+    {!} が指定された場合, 又は変数 {var} に値が設定されていない場合, 変数
+    {var} に値を設定するプロンプトが表示される. 書式は |input| を参照. {var}
+    以降の引数が設定されなかった場合も, デフォルトのプロンプトを表じする.
+
+    例: 変数 X に値を設定するプロンプトを, 既に X に値が設定されているか否かに
+    関わらず表示し, デフォルトの値として foo を入れる.  >
+    {{input!: X: 'please input value of X:', 'foo'}}
+<
     この行は挿入されない. この行に他のキーワードを含めてはならない.
 
                                                 *sniplate-keyword-let*
@@ -303,13 +305,24 @@ g:sniplate#sniplate_end_keyword         String (default: 'END SNIPLATE')
 - {{ eval: {expr} }}
     この部分は, 挿入時に eval( {expr} ) によって評価された値に置き換わる.
 
+------------------------------------------------------------------------------
+スニペット変数                                  *sniplate-snippet-variable*
+
+キーワードのいくつかは, スニペットにおける変数を扱うものである.
+|sniplate-keyword-input|, |sniplate-keyword-let|, によって, 又, まだ変数に値が
+設定されていない時の |sniplate-keyword-var| によって, 変数に値が設定される.
+
+|g:sniplate#cache_variable_in_buffer| が偽の時, この変数は, 一回の読み込みの間
+のみ値が保たれる. require や複数指定等により同時に読み込まれるスニペットについ
+ても, 同じ変数名に対しては同じ値が保たれる.
+|g:sniplate#cache_variable_in_buffer| が真の時は, この変数は, 同じバッファに対
+して保たれる.
 
 Note:
 変数 X に対し, >
         {{ var : X }}
-<と入力すると, 無限ループに陥る.
-また, eval で 自分自身を表現する文字列(いわゆるQuine) を書くと, 無限ループに
-陥る. 止めるには, CTRL-C (Windowsの場合は CTRL-Break) を押下する.
+<などと入力すると, 無限ループに陥る.
+止めるには, CTRL-C (Windowsの場合は CTRL-Break) を押下する.
 
 
 ==============================================================================
@@ -405,7 +418,7 @@ sniplateファイルの例.
 ==============================================================================
 Unite sources                               *sniplate-unite-sources*
 
-|sniplate.vim| は, 2つの |unite-sources| を提供する.
+|sniplate.vim| は, 3つの |unite-sources| を提供する.
 
                                             *sniplate-unite-source-sniplate*
 Unite sniplate[:{arg} [:{arg} [...]]]
@@ -414,8 +427,9 @@ Unite sniplate[:{arg} [:{arg} [...]]]
         義されたファイルを開く事が可能. {arg} に '!' を渡すと,
         |sniplate-keyword-require| に関わらず, 強制的に挿入する. 引数にクラス
         を指定すると, それらのクラスのいずれかに属するスニペットのみを表示する.
+        クラスに関しては |sniplate-keyword-class| を参照.
 
-        例: number クラスの候補を表示し, 強制的に挿入する場合.
+        例: number クラスの候補を表示し, 選択したものを強制的に挿入する場合.
 >
             Unite sniplate:!:number
 <
@@ -423,10 +437,22 @@ Unite sniplate[:{arg} [:{arg} [...]]]
 Unite sniplate/variable[:{var} [:{var} [...]]]
         バッファにキャッシュされた変数を候補選択出来る. 値の変更や, キャッシュ
         からの削除が可能. 引数が指定されると, その候補のみを表示する.
+        変数については, |sniplate-snippet-variable| を参照.
+
+                                        *sniplate-unite-source-sniplate-class*
+Unite sniplate/class
+        現ファイルタイプのスニペットで用いられているクラスの一覧を候補とする.
+        複数選択可能で, 選択したクラスに属するスニペット一覧に移る.
+        クラスに関しては |sniplate-keyword-class| を参照.
 
 
 ==============================================================================
 更新履歴                                        *sniplate-changelog*
+
+0.0.4   2013-02-08
+        - input に bang を指定可能にした.
+        - input の変数名以外の引数を省略可能にした.
+        - unite source に sniplate/class を追加した.
 
 0.0.3   2013-02-07
         - class, let を追加.
@@ -435,7 +461,7 @@ Unite sniplate/variable[:{var} [:{var} [...]]]
 
 0.0.2   2013-02-07
         - unite でスニペットを複数選択可能にした.
-        - unite source に sniplate/variables を追加した.
+        - unite source に sniplate/variabl を追加した.
 
 0.0.1   2013-02-06
         - priority, invisible, input, exec, var, cursor, eval を追加.

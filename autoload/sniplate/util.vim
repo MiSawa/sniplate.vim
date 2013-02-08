@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE:           util.vim
 " AUTHOR:         Mi_Sawa <mi.sawa.1216+vim@gmail.com>
-" Last Modified:  6 Feb 2013.
+" Last Modified:  8 Feb 2013.
 " License:        zlib License
 "=============================================================================
 
@@ -73,7 +73,7 @@ function! sniplate#util#input_variable(var, ...) "{{{
   if a:0
     return call('input', a:000)
   else
-    return input('var ' . a:var . ': ')
+    return input('input value of ' . a:var . ' :')
   endif
 endfunction "}}}
 

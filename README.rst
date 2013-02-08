@@ -17,7 +17,7 @@ sniplateは, ファイルの編集中に, コード断片を読み込む為の�
 
   NeoBundle 'MiSawa/sniplate.vim'
 
-等とする. そうでない場合は, ``~/.vim/`` 又は ``$HOME/vimfiles/`` 等に, ダウンロードしたファイルを展開する.
+等とし, ``:NeoBundleInstall`` する. そうでない場合は, ``~/.vim/`` 又は ``$HOME/vimfiles/`` 等に, ダウンロードしたファイルを展開する.
 
 
 使い方
