@@ -20,7 +20,7 @@ let s:kind.alias_table = {
 
 let s:kind.action_table.start = {
       \   'description'         : 'gather sniplates in this/those class',
-      \   'is_quit'             : 1,
+      \   'is_quit'             : 0,
       \   'is_selectable'       : 1,
       \   'is_invalidate_cache' : 0,
       \   'is_listed'           : 1,
@@ -29,7 +29,22 @@ let s:kind.action_table.start = {
 function! s:kind.action_table.start.func(candidates) "{{{
   if empty(a:candidates) | return | endif
   let l:list = map(copy(a:candidates), 'v:val.word')
-  call unite#start([['sniplate'] + l:list])
+  call unite#start_temporary([['sniplate'] + l:list])
+endfunction "}}}
+
+let s:kind.action_table.insert = {
+      \   'description'         : 'insert sniplate in this/those class',
+      \   'is_quit'             : 1,
+      \   'is_selectable'       : 1,
+      \   'is_invalidate_cache' : 0,
+      \   'is_listed'           : 1,
+      \ }
+
+function! s:kind.action_table.insert.func(candidates) "{{{
+  if empty(a:candidates) | return | endif
+  let l:sniplates = sniplate#enumerate_sniplates_has_any_classes(
+        \ map(deepcopy(a:candidates), 'v:val.word'))
+  call sniplate#apply_sniplates(values(l:sniplates))
 endfunction "}}}
 
 function! unite#kinds#sniplate_class#define() "{{{

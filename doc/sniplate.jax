@@ -1,4 +1,4 @@
-*sniplate.txt*    template plugin for Battle Programmer.
+*sniplate.txt*    template/snippet plugin for Battle Programmer.
 
 Version : 0.0.5
 Author  : Mi_Sawa <mi.sawa.1216+vim@gmail.com>
@@ -180,7 +180,7 @@ g:sniplate#filetype_config              Dictionary (default: {})
             let g:sniplate#filetype_config['cpp'] = {
                 \ 'directory' : 'cplusplus',
                 \ 'keyword_pattern':
-                \ '\%(//\)\s*{{\s*\(.\{-\}\)\s*\%(:\s*\(.\{-\}\)\s*\%(:\s*\(.\{-\}\)\s*\)\?\)\?}}'
+                \ '\%(//\)\?\s*{{\s*\(.\{-\}\)\s*\%(:\s*\(.\{-\}\)\s*\%(:\s*\(.\{-\}\)\s*\)\?\)\?}}'
                 \ }
 <
                                 *g:sniplate#enable_cache*
@@ -356,7 +356,7 @@ sniplateファイルの例.
     // END SNIPLATE
 
     // BEGIN SNIPLATE includes
-    // {{exec: set foldmethod=marker}}
+    // {{exec: setlocal foldmethod=marker}}
     // {{invisible}}
     #include <iostream> //{{{
     #include <vector>
@@ -455,6 +455,7 @@ Unite sniplate/class
         - keyword_pattern を3引数にした.
         - begin/end keyword を case sensitive にした.
         - help の例を更新した.
+        - sniplate/class に action insert を追加した.
 
 0.0.4   2013-02-08
         - input に bang を指定可能にした.

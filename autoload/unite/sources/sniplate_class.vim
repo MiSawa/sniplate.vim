@@ -42,5 +42,3 @@ endfunction "}}}
 let &cpo = s:save_cpo
 unlet s:save_cpo
 " vim:se ts=2 sw=2 sts=2 fenc=utf-8 ff=unix ft=vim foldmethod=marker :
-
-
