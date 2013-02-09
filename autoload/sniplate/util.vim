@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE:           util.vim
 " AUTHOR:         Mi_Sawa <mi.sawa.1216+vim@gmail.com>
-" Last Modified:  8 Feb 2013.
+" Last Modified:  10 Feb 2013.
 " License:        zlib License
 "=============================================================================
 
@@ -12,9 +12,9 @@ function! sniplate#util#sort_by_cmp(ls, expr) "{{{
   exec      "function! s:COMPARE_FUNC_FOR_SORT(...)\n"
         \ . "  return eval(".string(a:expr).")\n"
         \ . "endfunction\n"
-  let l:res = sort(a:ls, 's:COMPARE_FUNC_FOR_SORT')
+  let res = sort(a:ls, 's:COMPARE_FUNC_FOR_SORT')
   delfunction s:COMPARE_FUNC_FOR_SORT
-  return l:res
+  return res
 endfunction "}}}
 
 function! sniplate#util#sort_by(ls, expr) "{{{
@@ -28,17 +28,17 @@ function! sniplate#util#sort_by(ls, expr) "{{{
 endfunction "}}}
 
 function! sniplate#util#marge(lhs, rhs, ...) "{{{
-  let l:to_s = get(a:000, 0, 'string(v:val)')
-  let l:used = {}
-  let l:lhs_s = map(copy(a:lhs), l:to_s)
-  let l:rhs_s = map(copy(a:rhs), l:to_s)
+  let to_s = get(a:000, 0, 'string(v:val)')
+  let used = {}
+  let lhs_s = map(copy(a:lhs), to_s)
+  let rhs_s = map(copy(a:rhs), to_s)
 
-  for l:i in range(len(a:lhs))
-    let l:used[l:lhs_s[i]] = 1
+  for i in range(len(a:lhs))
+    let used[lhs_s[i]] = 1
   endfor
-  for l:i in range(len(a:rhs))
-    if !has_key(l:used, l:rhs_s[i])
-      let l:used[l:rhs_s[i]] = 1
+  for i in range(len(a:rhs))
+    if !has_key(used, rhs_s[i])
+      let used[rhs_s[i]] = 1
       call add(a:lhs, a:rhs[i])
     endif
   endfor
@@ -56,14 +56,14 @@ endfunction "}}}
 function! sniplate#util#convert_to_012(var, error_message, ...) "{{{
   " 0, '0', 'false' を 0 に, 1, '1', 'true' を 1 に, 2, '2', 'auto' を 2 にする.
   " 大文字/小文字の区別は無し. 当てはまらないならメッセージを表示し, -1 を返す.
-  let l:res = index([0, 1, 2], a:var)
-  let l:max = get(a:000, 0, 2)
-  if l:res == -1 && type(a:var) == type('string')
-    let l:res = get({'0': 0, '1': 1, '2':2}, a:var,
+  let res = index([0, 1, 2], a:var)
+  let max = get(a:000, 0, 2)
+  if res == -1 && type(a:var) == type('string')
+    let res = get({'0': 0, '1': 1, '2':2}, a:var,
           \ index(['false', 'true', 'auto'], tolower(a:var)))
   endif
-  if l:res != -1 && l:res <= l:max
-    return l:res
+  if res != -1 && res <= max
+    return res
   endif
   echoerr 'ERROR in sniplate.vim: ' . a:error_message
   return -1
@@ -75,6 +75,32 @@ function! sniplate#util#input_variable(var, ...) "{{{
   else
     return input('input value of ' . a:var . ' :')
   endif
+endfunction "}}}
+
+function! sniplate#util#remove_multibyte_garbage(str)  "{{{
+  return substitute(strtrans(a:str), '^\V\(<\x\x>\)\+\|\(<\x\x>\)\+\$', '', 'g')
+endfunction "}}}
+
+function! sniplate#util#cutoff_string(str, length, ...) "{{{
+  let ry = get(a:000, 0, '')
+  let raw = ""
+  for i in range(len(a:str))
+    let raw = raw . a:str[i]
+    let crr = sniplate#util#remove_multibyte_garbage(raw)
+    if strwidth(crr) > a:length + len(ry)
+      if i == 0
+        return ""
+      else
+        let res = sniplate#util#remove_multibyte_garbage(raw[:-2])
+        if strwidth(res . ry) >= strwidth(a:str)
+          return a:str
+        else
+          return res . ry
+        endif
+      endif
+    endif
+  endfor
+  return a:str
 endfunction "}}}
 
 let &cpo = s:save_cpo

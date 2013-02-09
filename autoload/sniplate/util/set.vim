@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE:           util.vim
 " AUTHOR:         Mi_Sawa <mi.sawa.1216+vim@gmail.com>
-" Last Modified:  7 Feb 2013.
+" Last Modified:  10 Feb 2013.
 " License:        zlib License
 "=============================================================================
 
@@ -17,30 +17,30 @@ let s:emptyset = {}
 let s:emptyset.raw_items = {}
 
 function! s:emptyset.items() dict "{{{
-  return keys(l:self.raw_items)
+  return keys(self.raw_items)
 endfunction "}}}
 
 function! s:emptyset.empty() dict "{{{
-  return empty(l:self.raw_items)
+  return empty(self.raw_items)
 endfunction "}}}
 
 function! s:emptyset.add(item) dict "{{{
-  let l:self.raw_items[a:item] = 1
-  return l:self
+  let self.raw_items[a:item] = 1
+  return self
 endfunction "}}}
 
 function! s:emptyset.remove(item) dict "{{{
-  call remove(l:self.raw_items, a:item)
-  return l:self
+  call remove(self.raw_items, a:item)
+  return self
 endfunction "}}}
 
 function! s:emptyset.has(item) dict "{{{
-  return has_key(l:self.raw_items, a:item)
+  return has_key(self.raw_items, a:item)
 endfunction "}}}
 
 function! s:emptyset.has_all(items) dict "{{{
-  for l:item in a:items
-    if !l:self.has(l:item)
+  for item in a:items
+    if !self.has(item)
       return 0
     endif
   endfor
@@ -48,8 +48,8 @@ function! s:emptyset.has_all(items) dict "{{{
 endfunction "}}}
 
 function! s:emptyset.has_any(items) dict "{{{
-  for l:item in a:items
-    if l:self.has(l:item)
+  for item in a:items
+    if self.has(item)
       return 1
     endif
   endfor
@@ -57,31 +57,31 @@ function! s:emptyset.has_any(items) dict "{{{
 endfunction "}}}
 
 function! s:emptyset.union(other) dict "{{{
-  call extend(l:self.raw_items, a:other.raw_items)
-  return l:self
+  call extend(self.raw_items, a:other.raw_items)
+  return self
 endfunction "}}}
 
 function! s:emptyset.intersection(other) dict "{{{
-  for l:item in l:self.items()
-    if !a:other.has(l:item)
-      call l:self.remove(l:item)
+  for item in self.items()
+    if !a:other.has(item)
+      call self.remove(item)
     endif
   endfor
-  return l:self
+  return self
 endfunction "}}}
 
 function! s:emptyset.add_items(items) dict "{{{
-  for l:item in a:items
-    call l:self.add(l:item)
+  for item in a:items
+    call self.add(item)
   endfor
-  return l:self
+  return self
 endfunction "}}}
 
 function! s:emptyset.remove_items(items) dict "{{{
-  for l:item in a:items
-    call l:self.remove(l:item)
+  for item in a:items
+    call self.remove(item)
   endfor
-  return l:self
+  return self
 endfunction "}}}
 
 function! s:emptyset.string() "{{{
@@ -89,9 +89,9 @@ function! s:emptyset.string() "{{{
 endfunction "}}}
 
 function! sniplate#util#set#make_set(items) "{{{
-  let l:res = sniplate#util#set#emptyset()
-  call l:res.add_items(a:items)
-  return l:res
+  let res = sniplate#util#set#emptyset()
+  call res.add_items(a:items)
+  return res
 endfunction "}}}
 
 let &cpo = s:save_cpo

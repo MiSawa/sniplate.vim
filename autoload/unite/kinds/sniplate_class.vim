@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE:           sniplate.vim
 " AUTHOR:         Mi_Sawa <mi.sawa.1216+vim@gmail.com>
-" Last Modified:  9 Feb 2013.
+" Last Modified:  10 Feb 2013.
 " License:        zlib License
 "=============================================================================
 
@@ -28,8 +28,8 @@ let s:kind.action_table.start = {
 
 function! s:kind.action_table.start.func(candidates) "{{{
   if empty(a:candidates) | return | endif
-  let l:list = map(copy(a:candidates), 'v:val.word')
-  call unite#start_temporary([['sniplate'] + l:list])
+  let list = map(copy(a:candidates), 'v:val.word')
+  call unite#start_temporary([['sniplate'] + list])
 endfunction "}}}
 
 let s:kind.action_table.insert = {
@@ -42,9 +42,9 @@ let s:kind.action_table.insert = {
 
 function! s:kind.action_table.insert.func(candidates) "{{{
   if empty(a:candidates) | return | endif
-  let l:sniplates = sniplate#enumerate_sniplates_has_any_classes(
+  let sniplates = sniplate#enumerate_sniplates_has_any_classes(
         \ map(deepcopy(a:candidates), 'v:val.word'))
-  call sniplate#apply_sniplates(values(l:sniplates))
+  call sniplate#apply_sniplates(values(sniplates))
 endfunction "}}}
 
 function! unite#kinds#sniplate_class#define() "{{{

@@ -1,6 +1,6 @@
 *sniplate.txt*    template/snippet plugin for Battle Programmer.
 
-Version : 0.0.5
+Version : 0.0.6
 Author  : Mi_Sawa <mi.sawa.1216+vim@gmail.com>
 License : zlib License
 ==============================================================================
@@ -449,6 +449,10 @@ Unite sniplate/class
 
 ==============================================================================
 更新履歴                                        *sniplate-changelog*
+
+0.0.6   2013-02-10
+        - インデントに対応した.
+        - unite source sniplate の見た目を改善した.
 
 0.0.5   2013-02-09
         - sniplate/class の action start を修正した.

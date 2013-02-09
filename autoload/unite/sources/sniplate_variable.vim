@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE:           sniplate_variable.vim
 " AUTHOR:         Mi_Sawa <mi.sawa.1216+vim@gmail.com>
-" Last Modified:  7 Feb 2013.
+" Last Modified:  10 Feb 2013.
 " License:        zlib License
 "=============================================================================
 
@@ -17,24 +17,24 @@ let s:source = {
 
 function! s:source.gather_candidates(args, context) "{{{
   call unite#print_message('[sniplate/variable]')
-  let l:variables = sniplate#enumerate_cached_variables()
-  let l:res = []
-  for [l:var, l:val] in items(l:variables)
-    call add(l:res, {})
-    let l:res[-1].word             = l:var
-    let l:res[-1].kind             = s:source.default_kind
-    let l:res[-1].action__text     = l:val
-    let l:res[-1].abbr             = printf('%-15s %s', l:var, l:val)
-    let l:res[-1].source__variable = l:var
+  let variables = sniplate#enumerate_cached_variables()
+  let res = []
+  for [var, val] in items(variables)
+    call add(res, {})
+    let res[-1].word             = var
+    let res[-1].kind             = s:source.default_kind
+    let res[-1].action__text     = val
+    let res[-1].abbr             = printf('%-15s %s', var, val)
+    let res[-1].source__variable = var
   endfor
-  call sort(l:res)
-  return l:res
+  call sort(res)
+  return res
 endfunction "}}}
 
 function! s:source.complete(args, context, arglead, cmdline, cursorpos) "{{{
-  let l:res = keys(sniplate#enumerate_cached_variables())
-  call filter(l:res, 'index(a:args[:-2], v:val) == -1')
-  return l:res
+  let res = keys(sniplate#enumerate_cached_variables())
+  call filter(res, 'index(a:args[:-2], v:val) == -1')
+  return res
 endfunction "}}}
 
 function! unite#sources#sniplate_variable#define() "{{{
