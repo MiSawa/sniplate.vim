@@ -21,9 +21,9 @@ function! s:source.gather_candidates(args, context) "{{{
   let res = []
   for class in classes
     call add(res, {})
-    let res[-1].word             = class
-    let res[-1].kind             = s:source.default_kind
-    let res[-1].abbr             = class
+    let res[-1].word  = class
+    let res[-1].kind  = s:source.default_kind
+    let res[-1].abbr  = class
   endfor
   call sort(res)
   return res

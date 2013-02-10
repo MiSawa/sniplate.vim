@@ -26,24 +26,30 @@ function! s:make_abbr(name, class, abbr) "{{{
   return sniplate#util#cutoff_string(res, col_len - 8, '..')
 endfunction "}}}
 
-function! sniplate#get_unite_sniplate_candidate(snipname, ...) "{{{
+function! sniplate#get_unite_sniplate_candidate(arg, ...) "{{{
   let context = get(a:000, 0, {})
-  if a:0 > 1
-    let sniplate = a:2
+  let snipname = a:arg.name
+  if has_key(a:arg, 'sniplate')
+    let sniplate = a:arg.sniplate
   else
-    let sniplate = sniplate#enumerate_sniplates()[a:snipname]
+    let ft = []
+    if has_key(a:arg, 'filetype')
+      let ft = [a:arg.filetype]
+    endif
+    let sniplate =
+          \ call('sniplate#enumerate_sniplates', ft)[snipname]
   endif
   let res = {}
 
-  let res.word             = a:snipname . ' ' .sniplate.class.string()
+  let res.word             = snipname . ' ' .sniplate.class.string()
   let res.kind             = s:source.default_kind
   let res.abbr             =
-        \ s:make_abbr(a:snipname, sniplate.class.string(), sniplate.abbr)
+        \ s:make_abbr(snipname, sniplate.class.string(), sniplate.abbr)
   let res.action__path     = sniplate.path
   let res.action__line     = sniplate.line_number
   let res.action__text     = join(sniplate.lines, "\n")
   let res.source__sniplate = sniplate
-  let res.source__bang     = get(context, 'source__bang', 0)
+  let res.source__bang     = get(a:arg, 'bang', 0)
   return res
 endfunction "}}}
 
@@ -72,10 +78,16 @@ endfunction "}}}
 function! s:source.gather_candidates(args, context) "{{{
   call unite#print_message('[sniplate]')
   let sniplates = a:context.source__sniplates
+  let bang = get(a:context, 'source__bang', 0)
   let res = []
   for [snipname, sniplate] in items(sniplates)
+    let arg = {
+          \ 'name'     : snipname,
+          \ 'sniplate' : sniplate,
+          \ 'bang'     : bang,
+          \ }
     call add(res, sniplate#get_unite_sniplate_candidate(
-          \ snipname, a:context, sniplate))
+          \ arg, a:context))
   endfor
   call sniplate#util#sort_by(res, '-a:1.source__sniplate.priority')
   return res

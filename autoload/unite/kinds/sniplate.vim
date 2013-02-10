@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE:           sniplate.vim
 " AUTHOR:         Mi_Sawa <mi.sawa.1216+vim@gmail.com>
-" Last Modified:  7 Feb 2013.
+" Last Modified:  10 Feb 2013.
 " License:        zlib License
 "=============================================================================
 
@@ -31,9 +31,13 @@ let s:kind.action_table.insert = {
 
 function! s:kind.action_table.insert.func(candidates) "{{{
   if empty(a:candidates) | return | endif
+  let bang = 0
+  for candidate in a:candidates
+    let bang = bang || candidate.source__bang
+  endfor
   call call('sniplate#apply_sniplates',
         \ [map(deepcopy(a:candidates), 'v:val.source__sniplate')]
-        \ + [line('.'), a:candidates[0].source__bang])
+        \ + [line('.'), bang])
 endfunction "}}}
 
 function! unite#kinds#sniplate#define() "{{{

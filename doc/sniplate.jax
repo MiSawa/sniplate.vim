@@ -68,8 +68,8 @@ Note:
 ァイルを作成する. フォルダの場所を変更したい場合は,
 |g:sniplate#sniplates_directory| , |g:sniplate#filetype_config| を参照.
 スニペットファイルの作成については, |sniplate-syntax|, |sniplate-examples| を参照.
-スニペットを挿入するには, |SniplateLoad| を用いるが, |unite| をインストールしている
-場合は, 'Unite sniplate' を用いる事も出来る.
+スニペットを挿入するには, |SniplateLoad| を用いるが, |unite| をインストールして
+いる場合は, 'Unite sniplate' を用いる事も出来る.
 
 
 ==============================================================================
@@ -186,7 +186,7 @@ g:sniplate#filetype_config              Dictionary (default: {})
                                 *g:sniplate#enable_cache*
 g:sniplate#enable_cache                 Number (default: 1)
         この変数が真の時, ファイルタイプ毎に, 一度列挙したスニペットをキャッシ
-        ュする.
+        ュする. スニペットの編集中以外, なるべく 1 にする事を推奨する.
 
                                 *g:sniplate#cache_variable_in_buffer*
 g:sniplate#cache_variable_in_buffer     Number (default: 1)
@@ -235,9 +235,9 @@ g:sniplate#sniplate_end_keyword         String (default: 'END SNIPLATE')
     {names} はカンマ区切りのスニペット名であり, これらに依存するスニペットであ
     る事を示す. {names} は, 最初にある物ほど上になるように挿入され, 再帰的に処
     理される. 具体的には, 深さ優先探索の帰りがけ順で挿入される.  pattern キー
-    ワードに依らず, 同じ物が何度も require されていても, 挿入されるのは一度で
-    ある. |sniplate-keyword-class| の継承は行われない. (今後もそうであるとは限
-    らない)
+    ワードや, 関数への引数 {!} に依らず, 同じ物が何度も require されていても,
+    挿入されるのは一度である. |sniplate-keyword-class| の継承は行われない. (今
+    後もそうであるとは限らない)
     この行は挿入されない. この行に他のキーワードを含めてはならない.
 
                                                 *sniplate-keyword-pattern*
@@ -447,12 +447,34 @@ Unite sniplate/class
         クラスに関しては |sniplate-keyword-class| を参照.
 
 
+また, 次の, unite-candidate を取得出来る関数を提供する.
+
+                                        *sniplate#get_unite_sniplate_candidate*
+sniplate#get_unite_sniplate_candidate({args} [, {context}])
+        {context} については, |unite-notation-{context}| を参照のこと.
+        {args} は辞書で, 次のキーが有効である.
+
+        name                必須        String
+            スニペット名を記述する.
+
+        sniplate            任意        Dictionary
+            スニペット自体である. 省略可能.
+            省略され, |g:sniplate#enable_cache| がオフである時, この関数を何度
+            も呼び出すと, 多少の時間がかかる事に注意せよ.
+
+        filetype            任意        String (default: same as &ft)
+            スニペットが省略された場合, スニペットを探すファイルタイプを指定す
+            る事が可能である. スニペット自体が指定された場合, このキーは無視さ
+            れる.
+
+
 ==============================================================================
 更新履歴                                        *sniplate-changelog*
 
 0.0.6   2013-02-10
         - インデントに対応した.
         - unite source sniplate の見た目を改善した.
+        - unite candidate を関数で取得できるようにした.
 
 0.0.5   2013-02-09
         - sniplate/class の action start を修正した.
