@@ -23,6 +23,7 @@ sniplateは, ファイルの編集中に, コード断片を読み込む為の�
 使い方
 ------
 詳しくは, ``help sniplate`` を参照.
+また, `Vim Advent Calendar 2012 <http://atnd.org/events/33746>`_ の `この記事 <http://d.hatena.ne.jp/Mi_Sawa/20130212>`_ にも説明がある.
 
 例として, C++で関数 ``sum`` と ``average`` をスニペット化する場合,
 
