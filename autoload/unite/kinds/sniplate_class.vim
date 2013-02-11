@@ -1,7 +1,7 @@
 "=============================================================================
-" FILE:           sniplate.vim
+" FILE:           sniplate_class.vim
 " AUTHOR:         Mi_Sawa <mi.sawa.1216+vim@gmail.com>
-" Last Modified:  10 Feb 2013.
+" Last Modified:  11 Feb 2013.
 " License:        zlib License
 "=============================================================================
 
@@ -20,7 +20,7 @@ let s:kind.alias_table = {
 
 let s:kind.action_table.start = {
       \   'description'         : 'gather sniplates in this/those class',
-      \   'is_quit'             : 0,
+      \   'is_quit'             : 1,
       \   'is_selectable'       : 1,
       \   'is_invalidate_cache' : 0,
       \   'is_listed'           : 1,
@@ -42,8 +42,16 @@ let s:kind.action_table.insert = {
 
 function! s:kind.action_table.insert.func(candidates) "{{{
   if empty(a:candidates) | return | endif
-  let sniplates = sniplate#enumerate_sniplates_has_any_classes(
-        \ map(deepcopy(a:candidates), 'v:val.word'))
+  let ft = []
+  for class in a:candidates
+    if has_key(candidate, 'source__filetype')
+      call add(ft, candidate.source__filetype
+      break
+    endif
+  endfor
+  let sniplates = call(
+        \ 'sniplate#enumerate_sniplates_has_any_classes'
+        \ [map(deepcopy(a:candidates), 'v:val.word')] + ft)
   call sniplate#apply_sniplates(values(sniplates))
 endfunction "}}}
 

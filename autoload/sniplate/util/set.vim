@@ -1,16 +1,20 @@
 "=============================================================================
-" FILE:           util.vim
+" FILE:           set.vim
 " AUTHOR:         Mi_Sawa <mi.sawa.1216+vim@gmail.com>
-" Last Modified:  10 Feb 2013.
+" Last Modified:  11 Feb 2013.
 " License:        zlib License
 "=============================================================================
 
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! sniplate#util#set#emptyset()
-  return deepcopy(s:emptyset)
-endfunction
+function! sniplate#util#set#new(...) "{{{
+  let res = deepcopy(s:emptyset)
+  if a:0
+    call res.add_items(a:items)
+  endif
+  return res
+endfunction "}}}
 
 let s:emptyset = {}
 
@@ -86,12 +90,6 @@ endfunction "}}}
 
 function! s:emptyset.string() "{{{
   return string(self.items())
-endfunction "}}}
-
-function! sniplate#util#set#make_set(items) "{{{
-  let res = sniplate#util#set#emptyset()
-  call res.add_items(a:items)
-  return res
 endfunction "}}}
 
 let &cpo = s:save_cpo

@@ -1,6 +1,6 @@
 *sniplate.txt*    template/snippet plugin for Battle Programmer.
 
-Version : 0.0.6
+Version : 0.0.7
 Author  : Mi_Sawa <mi.sawa.1216+vim@gmail.com>
 License : zlib License
 ==============================================================================
@@ -421,7 +421,7 @@ Unite sources                               *sniplate-unite-sources*
 
 |sniplate.vim| は, 3つの |unite-sources| を提供する.
 
-                                            *sniplate-unite-source-sniplate*
+                            *sniplate-unite-source-sniplate*
 Unite sniplate[:{arg} [:{arg} [...]]]
         現ファイルタイプのスニペットを候補とする. 複数選択が可能で, 現在行に挿
         入する事が出来る. また, |unite-kind-jump_list| により, スニペットが定
@@ -434,28 +434,30 @@ Unite sniplate[:{arg} [:{arg} [...]]]
 >
             Unite sniplate:!:number
 <
-                                        *sniplate-unite-source-sniplate-variable*
+                            *sniplate-unite-source-sniplate-variable*
 Unite sniplate/variable[:{var} [:{var} [...]]]
         バッファにキャッシュされた変数を候補選択出来る. 値の変更や, キャッシュ
         からの削除が可能. 引数が指定されると, その候補のみを表示する.
         変数については, |sniplate-snippet-variable| を参照.
 
-                                        *sniplate-unite-source-sniplate-class*
+                            *sniplate-unite-source-sniplate-class*
 Unite sniplate/class
         現ファイルタイプのスニペットで用いられているクラスの一覧を候補とする.
         複数選択可能で, 選択したクラスに属するスニペット一覧に移る.
         クラスに関しては |sniplate-keyword-class| を参照.
 
 
-また, 次の, unite-candidate を取得出来る関数を提供する.
 
-                                        *sniplate#get_unite_sniplate_candidate*
-sniplate#get_unite_sniplate_candidate({args} [, {context}])
+また, 次の, |unite-notation-{candidate}| を取得出来る関数を提供する.
+
+                            *sniplate#candidate_factory#get_sniplate_candidate*
+
+sniplate#candidate_factory#get_sniplate_candidate({args} [, {context}])
         {context} については, |unite-notation-{context}| を参照のこと.
         {args} は辞書で, 次のキーが有効である.
 
-        name                必須        String
-            スニペット名を記述する.
+        name                任意        String
+            スニペット名を記述する. sniplate キーを指定しない場合は省略不可.
 
         sniplate            任意        Dictionary
             スニペット自体である. 省略可能.
@@ -470,6 +472,10 @@ sniplate#get_unite_sniplate_candidate({args} [, {context}])
 
 ==============================================================================
 更新履歴                                        *sniplate-changelog*
+
+0.0.7   2013-02-11
+        - unite kind sniplate に action show_information を追加した.
+        - cache 時のバグを修正した.
 
 0.0.6   2013-02-10
         - インデントに対応した.

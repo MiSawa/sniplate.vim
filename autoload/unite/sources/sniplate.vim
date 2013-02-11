@@ -1,57 +1,12 @@
 "=============================================================================
 " FILE:           sniplate.vim
 " AUTHOR:         Mi_Sawa <mi.sawa.1216+vim@gmail.com>
-" Last Modified:  10 Feb 2013.
+" Last Modified:  11 Feb 2013.
 " License:        zlib License
 "=============================================================================
 
 let s:save_cpo = &cpo
 set cpo&vim
-
-function! s:make_abbr(name, class, abbr) "{{{
-  let col_len = winwidth(0)
-  let name_len = col_len/4
-  let class_len = col_len/4
-  if a:class ==# string([])
-    let name_len += class_len
-    let class_len = 0
-  endif
-  let abbr_len = col_len - name_len - class_len
-  let abbr_len += abbr_len
-
-  let res = printf(
-        \ printf('%%-%d.%ds %%-%d.%ds %%s',
-        \   name_len, name_len, class_len, class_len),
-        \ a:name, a:class, a:abbr)
-  return sniplate#util#cutoff_string(res, col_len - 8, '..')
-endfunction "}}}
-
-function! sniplate#get_unite_sniplate_candidate(arg, ...) "{{{
-  let context = get(a:000, 0, {})
-  let snipname = a:arg.name
-  if has_key(a:arg, 'sniplate')
-    let sniplate = a:arg.sniplate
-  else
-    let ft = []
-    if has_key(a:arg, 'filetype')
-      let ft = [a:arg.filetype]
-    endif
-    let sniplate =
-          \ call('sniplate#enumerate_sniplates', ft)[snipname]
-  endif
-  let res = {}
-
-  let res.word             = snipname . ' ' .sniplate.class.string()
-  let res.kind             = s:source.default_kind
-  let res.abbr             =
-        \ s:make_abbr(snipname, sniplate.class.string(), sniplate.abbr)
-  let res.action__path     = sniplate.path
-  let res.action__line     = sniplate.line_number
-  let res.action__text     = join(sniplate.lines, "\n")
-  let res.source__sniplate = sniplate
-  let res.source__bang     = get(a:arg, 'bang', 0)
-  return res
-endfunction "}}}
 
 let s:source = {
       \   'name'           : 'sniplate',
@@ -86,7 +41,7 @@ function! s:source.gather_candidates(args, context) "{{{
           \ 'sniplate' : sniplate,
           \ 'bang'     : bang,
           \ }
-    call add(res, sniplate#get_unite_sniplate_candidate(
+    call add(res, sniplate#candidate_factory#get_sniplate_candidate(
           \ arg, a:context))
   endfor
   call sniplate#util#sort_by(res, '-a:1.source__sniplate.priority')

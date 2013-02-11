@@ -1,7 +1,7 @@
 "=============================================================================
-" FILE:           sniplate_variable.vim
+" FILE:           sniplate_class.vim
 " AUTHOR:         Mi_Sawa <mi.sawa.1216+vim@gmail.com>
-" Last Modified:  10 Feb 2013.
+" Last Modified:  11 Feb 2013.
 " License:        zlib License
 "=============================================================================
 
@@ -20,10 +20,11 @@ function! s:source.gather_candidates(args, context) "{{{
   let classes = sniplate#enumerate_classes()
   let res = []
   for class in classes
-    call add(res, {})
-    let res[-1].word  = class
-    let res[-1].kind  = s:source.default_kind
-    let res[-1].abbr  = class
+    call add(res,
+          \ sniplate#candidate_factory#get_class_candidate(
+          \  class
+          \ ))
+    continue
   endfor
   call sort(res)
   return res

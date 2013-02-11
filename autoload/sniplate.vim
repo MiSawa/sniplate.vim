@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE:           sniplate.vim
 " AUTHOR:         Mi_Sawa <mi.sawa.1216+vim@gmail.com>
-" Last Modified:  9 Feb 2013.
+" Last Modified:  11 Feb 2013.
 " License:        zlib License
 "=============================================================================
 
@@ -56,7 +56,7 @@ call s:set_default(
 "}}}
 "}}}
 
-" functions for make sniplate list "{{{
+" functions for gather sniplate list "{{{
 function! s:parse_sniplate(str, sniplate_file, line_number, config) "{{{
   let res             = {
         \ 'require'        : [],
@@ -65,8 +65,11 @@ function! s:parse_sniplate(str, sniplate_file, line_number, config) "{{{
         \ 'priority'       : 0,
         \ 'is_invisible'   : 0,
         \ 'overwrite'      : -1,
+        \ 'class'          : sniplate#util#set#new(),
         \ }
-  let res.class       = sniplate#util#set#emptyset()
+"        \ 'ancestors'      : sniplate#util#set#new(),
+"        \ 'descendants'    : sniplate#util#set#new(),
+  let res.class       = sniplate#util#set#new()
   let res.raw_lines   = split(a:str, "\n")
   let res.path        = a:sniplate_file
   let res.line_number = a:line_number
@@ -131,7 +134,7 @@ function! s:enumerate_sniplates_from_file(sniplate_file, config) "{{{
     let linenr = count(split(all_text[0 : match(all_text, pattern, 0, i)], '\zs'), "\n")
     let temp = s:parse_sniplate(snip_text, a:sniplate_file, linenr, a:config)
     if has_key(sniplates, temp.name)
-      echoerr "sniplate name " . string(temp.name) . " must be unique"
+      echoerr "sniplate name " . string(temp.name) . " must be unique."
     endif
     let sniplates[temp.name] = temp
     unlet temp
@@ -147,6 +150,44 @@ function! s:enumerate_sniplate_files(config) "{{{
 endfunction "}}}
 
 
+function! s:set_ancestors_and_descendants(sniplates) "{{{
+  " 使っていない
+  let graph = {}
+  for sniplate in values(a:sniplates)
+    let graph[sniplate.name] = deepcopy(sniplate.require)
+  endfor
+  let order = sniplate#util#scc#run(graph)
+  for snips in order
+    if len(snips) > 1
+      " 強連結成分
+      let descs = sips[0].descendants
+      for snip in snips
+        call descs.union(a:sniplates[snip].descendants)
+        call a:sniplates[snip].ancestors.add_items(snips)
+      endfor
+      for snip in snips
+        call a:sniplates[snip].descendants.union(descs)
+      endfor
+      unlet descs
+    endif
+    for snip in snips
+      for req in a:sniplates[snip].require
+        " 祖先に子孫として登録
+        call a:sniplates[req].descendants.add_items(snips)
+        call a:sniplates[req].descendants.union(
+              \  a:sniplates[snip].descendants)
+      endfor
+    endfor
+  endfor
+  for snip in keys(a:sniplates)
+    for desc in a:sniplates[snip].descendants.items()
+      " 逆辺張る
+      call a:sniplates[desc].ancestors.add(snip)
+    endfor
+  endfor
+endfunction "}}}
+
+
 function! s:noncached_enumerate_sniplates(config) "{{{
   let sniplate_files = s:enumerate_sniplate_files(a:config)
   let sniplates = {}
@@ -155,12 +196,18 @@ function! s:noncached_enumerate_sniplates(config) "{{{
           \ s:enumerate_sniplates_from_file(sniplate_file, a:config)
     for [snipname, sniplate] in items(new_sniplates)
       if has_key(sniplates, snipname)
-        echoerr "sniplate name " . string(snipname) . " must be unique"
+        echoerr "sniplate name " . string(snipname) . " must be unique."
       endif
       let sniplates[snipname] = sniplate
     endfor
-    " call extend(sniplates,
-    "       \ s:enumerate_sniplates_from_file(sniplate_file, a:config), "error" )
+  endfor
+  for sniplate in values(sniplates)
+    for req in sniplate.require
+      if !has_key(sniplates, req)
+        echoerr "sniplate name " . string(sniplate.name) . " requires " .
+              \ string(req) . "but not found."
+      endif
+    endfor
   endfor
   return sniplates
 endfunction "}}}
@@ -176,7 +223,7 @@ function! s:enumerate_sniplates(config) "{{{
     let s:cached_sniplates[a:config.filetype] =
           \ s:noncached_enumerate_sniplates(a:config)
   endif
-  return s:cached_sniplates[a:config.filetype]
+  return deepcopy(s:cached_sniplates[a:config.filetype])
 endfunction "}}}
 
 function! s:clear_cached_sniplates(...) "{{{
@@ -192,10 +239,10 @@ function! s:clear_cached_sniplates(...) "{{{
   endif
 endfunction "}}}
 
-function! s:enumerate_connected_sniplates(sniplate) "{{{
-  let stack = [a:sniplate.name]
+function! s:enumerate_ancestor_sniplates(sniplate) "{{{
   let sniplates = s:enumerate_sniplates(
         \ s:get_filetype_config(a:sniplate.filetype) )
+  let stack = [a:sniplate.name]
   let res = []
   let state = {}
   while !empty(stack)
@@ -215,6 +262,32 @@ function! s:enumerate_connected_sniplates(sniplate) "{{{
     endif
   endwhile
   return res
+endfunction "}}}
+
+function! s:enumerate_descendant_sniplates(sniplate) "{{{
+  let sniplates = s:enumerate_sniplates(
+        \ s:get_filetype_config(a:sniplate.filetype) )
+  let rev = {}
+  for snipname in keys(sniplates)
+    if !has_key(rev, snipname) | let rev[snipname] = [] | endif
+    for req in sniplates[snipname].require
+      if !has_key(rev, req) | let rev[req] = [] | endif
+      call add(rev[req], snipname)
+    endfor
+  endfor
+
+  let res = {a:sniplate.name : 1}
+  let stack = [a:sniplate.name]
+  while !empty(stack)
+    let last = remove(stack, -1)
+    for snipname in rev[last]
+      if !has_key(res, snipname)
+        let res[snipname] = 1
+        call add(stack, snipname)
+      endif
+    endfor
+  endwhile
+  return map(keys(res), 'sniplates[v:val]')
 endfunction "}}}
 
 
@@ -252,7 +325,7 @@ function! s:enumerate_sniplates_has_any_classes(classes, config) "{{{
 endfunction "}}}
 
 function! s:enumerate_classes(config) "{{{
-  let res = sniplate#util#set#emptyset()
+  let res = sniplate#util#set#new()
   let all_sniplates = s:enumerate_sniplates(a:config)
   for [snipname, sniplate] in items(all_sniplates)
     call res.union(sniplate.class)
@@ -435,7 +508,7 @@ function! s:apply_sniplates_with_require(sniplates, config, ...) "{{{
   let sniplist = []
   for sniplate in a:sniplates
     call sniplate#util#marge(sniplist,
-          \ s:enumerate_connected_sniplates(sniplate),
+          \ s:enumerate_ancestor_sniplates(sniplate),
           \ 'v:val.name')
   endfor
   call call('s:apply_sniplates',
@@ -448,7 +521,7 @@ function! s:apply_sniplate_with_require(sniplate, config, ...) "{{{
 endfunction "}}}
 "}}}
 
-" function for user "{{{
+" global functions "{{{
 function! sniplate#enumerate_sniplates(...) "{{{
   " 引数はファイルタイプ. 省略時は&ft.
   let filetype = get(a:000, 0, &ft)
@@ -481,6 +554,14 @@ function! sniplate#enumerate_sniplates_has_any_classes(classes, ...) "{{{
   " 2番目の引数はファイルタイプ. 省略時は&ft.
   let filetype = get(a:000, 0, &ft)
   return s:enumerate_sniplates_has_any_classes(a:classes, s:get_filetype_config(filetype))
+endfunction "}}}
+
+function! sniplate#enumerate_ancestor_sniplates(sniplate) "{{{
+  return s:enumerate_ancestor_sniplates(a:sniplate)
+endfunction "}}}
+
+function! sniplate#enumerate_descendant_sniplates(sniplate) "{{{
+  return s:enumerate_descendant_sniplates(a:sniplate)
 endfunction "}}}
 
 function! sniplate#has_sniplate(sniplate_name, ...) "{{{

@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE:           sniplate.vim
 " AUTHOR:         Mi_Sawa <mi.sawa.1216+vim@gmail.com>
-" Last Modified:  10 Feb 2013.
+" Last Modified:  11 Feb 2013.
 " License:        zlib License
 "=============================================================================
 
@@ -39,6 +39,22 @@ function! s:kind.action_table.insert.func(candidates) "{{{
         \ [map(deepcopy(a:candidates), 'v:val.source__sniplate')]
         \ + [line('.'), bang])
 endfunction "}}}
+
+let s:kind.action_table.show_information = {
+      \   'description'         : 'show information about this sniplate',
+      \   'is_quit'             : 1,
+      \   'is_selectable'       : 0,
+      \   'is_invalidate_cache' : 0,
+      \   'is_listed'           : 1,
+      \ }
+
+function! s:kind.action_table.show_information.func(candidate) "{{{
+  let filetype = a:candidate.source__sniplate.filetype
+  let snipname = a:candidate.source__sniplate.name
+  let context = { 'source__filetype' : filetype }
+  call unite#start_temporary([['sniplate/information', snipname]], context)
+endfunction "}}}
+
 
 function! unite#kinds#sniplate#define() "{{{
   return s:kind
