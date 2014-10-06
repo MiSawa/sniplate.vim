@@ -146,7 +146,7 @@ sniplate#clear_cached_variables( [{varname} ...])
 変数                                            *sniplate-variables*
 
                                 *g:sniplate#sniplates_directory*
-g:sniplate#sniplates_directory          String (default: '~/.vimrc')
+g:sniplate#sniplates_directory          String (default: '~/.vim/sniplates')
         スニペットを置くディレクトリへのパス.
 
                                 *g:sniplate#filetype_config*
